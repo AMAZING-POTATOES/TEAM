@@ -73,3 +73,30 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# macOS
+.DS_Store
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/local.properties
+android/debug.keystore
+
+# iOS (삭제했더라도 혹시 모르니)
+ios/
+Pods/
+*.xcworkspace
+
+# Others
+.expo/
+.bundle/
+.watchmanconfig
+
