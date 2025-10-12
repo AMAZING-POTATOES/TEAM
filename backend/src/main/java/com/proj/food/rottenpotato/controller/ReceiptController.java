@@ -1,7 +1,6 @@
 /* 레시피 추천/공유 등 */
 package com.proj.food.rottenpotato.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,7 +15,6 @@ public class ReceiptController {
 
     private final ReceiptOcrService ocrService;
 
-    @Autowired
     public ReceiptController(ReceiptOcrService ocrService) {
         this.ocrService = ocrService;
     }
