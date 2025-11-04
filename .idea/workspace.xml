@@ -5,19 +5,44 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="61d09d75-55d1-487e-bb42-2755798447af" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Gemfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/.xcode.env" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp.xcodeproj/project.pbxproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp.xcodeproj/xcshareddata/xcschemes/MyApp.xcscheme" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp/AppDelegate.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp/Images.xcassets/AppIcon.appiconset/Contents.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp/Images.xcassets/Contents.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp/Info.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp/LaunchScreen.storyboard" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/MyApp/PrivacyInfo.xcprivacy" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Podfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.eslintrc.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.prettierrc.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/App.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/build.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/debug.keystore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/proguard-rules.pro" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/java/com/myapp/MainActivity.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/java/com/myapp/MainApplication.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/drawable/rn_edit_text_material.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-hdpi/ic_launcher.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-mdpi/ic_launcher.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/values/styles.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/build.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/gradle.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/gradlew" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/gradlew.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/settings.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/app.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/babel.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/jest.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/metro.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/screens/RecipeScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/screens/RecipeScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/tsconfig.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,9 +55,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="33xUWyW2j7Fsb5xzo61xVWbUWYi" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -42,7 +67,9 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
