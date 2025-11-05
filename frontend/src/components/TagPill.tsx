@@ -3,7 +3,7 @@ export default function TagPill({
   dday,
 }: {
   name: string;
-  dday: string; // e.g., "D-1"
+  dday: string;
 }) {
   return (
     <div className="flex items-center justify-between bg-white rounded-[1rem] p-4 shadow">

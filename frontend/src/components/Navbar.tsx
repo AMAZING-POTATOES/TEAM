@@ -21,7 +21,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur border-b border-slate-200">
       <div className="max-w-6xl mx-auto h-16 px-4 flex items-center justify-between relative">
-        {/* Left: Logo */}
+
         <button
           onClick={() => nav("/")}
           className="flex items-center gap-2 shrink-0"
@@ -33,7 +33,7 @@ export default function Navbar() {
           </span>
         </button>
 
-        {/* Center: Tabs */}
+
         <nav className="hidden md:flex items-center gap-2">
           <NavLink to="/" className={navClass}>
             대시보드
@@ -46,7 +46,7 @@ export default function Navbar() {
           </NavLink>
         </nav>
 
-        {/* Right: Auth */}
+
         <div className="flex items-center gap-3">
           {!user ? (
             <button
@@ -71,11 +71,10 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Login popover anchored to the login button */}
         {isLoginOpen && <LoginModal anchorRef={loginBtnRef} />}
       </div>
 
-      {/* Mobile tabs */}
+
       <nav className="md:hidden border-t border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto px-2 py-2 flex items-center justify-between">
           <NavLink to="/" className={navClass}>

@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useFridge } from "../lib/useFridge";
 import type { FridgeItemDTO } from "../lib/api";
 
-// 상태 계산(Fridge 페이지와 동일 로직)
 function daysToExpire(it: FridgeItemDTO): number | null {
   if (!it.expireDate) return null;
   const end = new Date(it.expireDate);
@@ -25,7 +24,6 @@ export default function Dashboard() {
   return (
     <div>
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* 업로드 배너 */}
         <section
           className="rounded-[20px] p-6 md:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
           style={{
@@ -51,7 +49,6 @@ export default function Dashboard() {
           </button>
         </section>
 
-        {/* 요약 카드(재고 연동) */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div className="rounded-[20px] p-6 bg-[var(--bg-card)] border border-[color:var(--border-soft)] flex items-center gap-4 shadow-sm">
             <div
@@ -88,7 +85,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 인기 레시피(이미지 자리만 비워둠) */}
         <section className="mt-10">
           <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
             이 재료로 만들 수 있어요! 인기 레시피

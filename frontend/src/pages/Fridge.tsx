@@ -3,15 +3,12 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Category, FridgeItemDTO } from "../lib/api";
 
-// 상태 타입
 type FreshStatus = "신선" | "임박" | "만료";
 
-// 상태 계산 함수
 function getStatus(item: FridgeItemDTO): FreshStatus {
   if (!item.expireDate) return "신선";
   const end = new Date(item.expireDate);
   const today = new Date();
-  // 자정 기준 비교(시간 무시)
   end.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -26,12 +23,10 @@ export default function Fridge() {
   const { items, loading, err, remove } = useFridge();
   const nav = useNavigate();
 
-  // 필터 상태
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<"ALL" | Category>("ALL");
   const [st, setSt] = useState<"ALL" | FreshStatus>("ALL");
 
-  // 필터링된 뷰
   const view = useMemo(() => {
     return items.filter((i) => {
       const matchesQ =
@@ -48,7 +43,6 @@ export default function Fridge() {
     });
   }, [items, q, cat, st]);
 
-  // 상태 뱃지
   const StatusBadge = ({ s }: { s: FreshStatus }) => {
     const tone =
       s === "신선"
@@ -116,7 +110,6 @@ export default function Fridge() {
             </button>
           </div>
 
-          {/* 테이블 */}
           <div className="overflow-auto">
             <table className="min-w-[880px] w-full text-sm">
               <thead>

@@ -1,6 +1,3 @@
-// src/lib/api.ts
-// 프론트 Mock API + 타입 정의
-
 export type Category =
   | "육류"
   | "해산물"
@@ -89,12 +86,10 @@ export const Api = {
     throw new Error("parseReceipt real API not implemented");
   },
 
-  /** 냉장고 목록 */
   async listFridge(): Promise<FridgeItemDTO[]> {
     if (USE_MOCK) {
       let list = read();
       if (list.length === 0) {
-        // 비어있으면 자동 시드
         const seed: FridgeItemDTO[] = [
           {
             id: "1",

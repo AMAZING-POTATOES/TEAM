@@ -59,7 +59,6 @@ export default function UploadReceipt() {
     }
   };
 
-  // dragover/drop 기본 동작 방지
   useEffect(() => {
     const prevent = (e: DragEvent) => {
       e.preventDefault();
@@ -77,14 +76,12 @@ export default function UploadReceipt() {
     if (drafts.length === 0) return;
     await addBulk(drafts);
     alert("냉장고에 추가되었습니다.");
-    // 초기화
     setFile(null);
     setProgress(0);
     setClassified(null);
     setDrafts([]);
   };
 
-  // UI용 작은 컴포넌트
   const Tag = ({ children }: { children: React.ReactNode }) => (
     <span className="inline-flex items-center gap-1 px-3 h-9 rounded-lg border border-gray-200 bg-white shadow-sm">
       {children}
@@ -94,19 +91,17 @@ export default function UploadReceipt() {
   return (
     <div>
       <main className="max-w-[1080px] mx-auto px-4 py-8">
-        {/* 상단 배너 + 카드 */}
+
         <section className="mb-6">
           <h1 className="text-[20px] md:text-[22px] font-extrabold tracking-[-0.02em]">
             영수증 업로드
           </h1>
 
-          {/* 큰 카드 */}
           <div className="mt-3 rounded-[18px] border border-[color:var(--border-soft)] bg-white shadow-sm p-6">
             <p className="text-[15px] text-[color:var(--text-secondary)]">
               영수증 파일을 업로드하여 재료를 자동 분류합니다.
             </p>
 
-            {/* 드래그 앤 드롭 박스 */}
             <label className="mt-4 block rounded-[16px] border-2 border-dashed border-gray-300 bg-[var(--bg-card)]">
               <div className="h-40 grid place-items-center text-slate-500">
                 <div className="text-center">
@@ -126,10 +121,8 @@ export default function UploadReceipt() {
               />
             </label>
 
-            {/* 업로드 진행/완료 UI */}
             {file && (
               <div className="mt-4 space-y-3">
-                {/* 상단 파일 진행 바 (피그마 85% 바 느낌) */}
                 <div className="rounded-[12px] border border-gray-200 bg-white px-4 py-3 shadow-sm">
                   <div className="flex items-center justify-between text-[13px] text-slate-600">
                     <div className="truncate max-w-[70%]">{file.name}</div>
@@ -146,7 +139,6 @@ export default function UploadReceipt() {
                   </div>
                 </div>
 
-                {/* 썸네일 라인(업로드 완료) */}
                 <div className="rounded-[12px] border border-gray-200 bg-white px-4 py-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -178,7 +170,6 @@ export default function UploadReceipt() {
           </div>
         </section>
 
-        {/* 분류 섹션: OCR 되기 전까지 숨김 */}
         {presentCats.length > 0 && (
           <section className="rounded-[18px] border border-[color:var(--border-soft)] bg-white shadow-sm p-6">
             {/* 타이틀 라인 */}
@@ -195,7 +186,6 @@ export default function UploadReceipt() {
                   type="button"
                   className="px-4 h-10 rounded-full border border-gray-300 text-[14px]"
                   onClick={() => {
-                    // 초기화
                     setFile(null);
                     setProgress(0);
                     setClassified(null);
@@ -215,7 +205,6 @@ export default function UploadReceipt() {
               </div>
             </div>
 
-            {/* 카테고리 그리드 (인식된 카테고리만 노출) */}
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {presentCats.map((cat) => (
                 <div

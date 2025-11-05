@@ -17,7 +17,6 @@ export default function UploadDialog({
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // 모달이 열릴 때 상태 초기화
   useEffect(() => {
     if (open) {
       setFile(null); setProgress(0); setClassified(null);
@@ -30,7 +29,7 @@ export default function UploadDialog({
     try {
       const res = await Api.parseReceipt(f, setProgress);
       setClassified(res);
-      // 인식된 항목만 draft 생성
+
       const today = new Date(); const toISO = (d: Date) => d.toISOString().slice(0, 10);
       const seven = new Date(today); seven.setDate(seven.getDate() + 7);
       const base: Draft[] = [];
@@ -66,16 +65,13 @@ export default function UploadDialog({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center">
-      {/* dim */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      {/* card */}
       <div className="relative bg-white w-full max-w-4xl rounded-[20px] p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">영수증 업로드</h2>
           <button onClick={onClose} className="w-9 h-9 rounded-full bg-slate-100">✕</button>
         </div>
 
-        {/* 업로드 박스 */}
         <label className="block h-44 border-2 border-dashed border-slate-300 rounded-[16px] grid place-items-center text-slate-500 cursor-pointer bg-white">
           <div className="text-center">
             <div className="text-2xl mb-1">⤓</div>
@@ -86,7 +82,6 @@ export default function UploadDialog({
                  onChange={(e)=>{ const f=e.target.files?.[0]; if (f) onPick(f); }} />
         </label>
 
-        {/* 진행률 */}
         {file && (
           <div className="mt-3">
             <div className="flex justify-between text-sm text-slate-600 mb-1">
@@ -99,7 +94,6 @@ export default function UploadDialog({
           </div>
         )}
 
-        {/* 자동 분류: 인식된 카테고리만 */}
         {presentCats.length > 0 && (
           <div className="mt-6 space-y-4">
             <div className="text-sm text-slate-600">인식된 항목들을 확인하세요. 잘못된 항목은 ‘수정’으로 바로 고칠 수 있어요.</div>
@@ -133,7 +127,6 @@ export default function UploadDialog({
               ))}
             </div>
 
-            {/* 상단 하나의 추가 버튼 */}
             <div className="flex justify-end">
               <button
                 className={`h-11 px-5 rounded-full text-white ${drafts.length===0 ? "opacity-50 cursor-not-allowed":""}`}
@@ -147,7 +140,6 @@ export default function UploadDialog({
           </div>
         )}
 
-        {/* 품목 수정 팝업 */}
         {editing && (
           <EditItemModal
             draft={editing.draft}
@@ -160,7 +152,6 @@ export default function UploadDialog({
   );
 }
 
-/* ─ 내부: 수정 모달 ─ */
 function EditItemModal({
   draft, onClose, onSave,
 }: {

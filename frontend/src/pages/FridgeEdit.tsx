@@ -12,7 +12,6 @@ export default function FridgeEdit() {
   const nav = useNavigate();
   const { items, update, addBulk } = useFridge();
 
-  // 편집 대상(수정 모드일 때만)
   const editing = useMemo(
     () => items.find((it) => it.id === id),
     [items, id]
@@ -28,7 +27,6 @@ export default function FridgeEdit() {
     memo: "",
   });
 
-  // 수정 모드일 때 초기값 채우기
   useEffect(() => {
     if (!id || id === "new") return;
     if (!editing) return;
@@ -63,7 +61,6 @@ export default function FridgeEdit() {
           onSubmit={onSave}
           className="bg-white rounded-[20px] border border-gray-200 p-6 shadow-sm space-y-4"
         >
-          {/* 이름 / 수량 */}
           <div className="grid md:grid-cols-2 gap-4">
             <label className="block">
               <div className="text-sm text-slate-600 mb-1">이름</div>
@@ -87,7 +84,6 @@ export default function FridgeEdit() {
             </label>
           </div>
 
-          {/* 보관 / 카테고리 */}
           <div className="grid md:grid-cols-2 gap-4">
             <label className="block">
               <div className="text-sm text-slate-600 mb-1">보관</div>
@@ -118,7 +114,6 @@ export default function FridgeEdit() {
             </label>
           </div>
 
-          {/* 날짜 */}
           <div className="grid md:grid-cols-2 gap-4">
             <label className="block">
               <div className="text-sm text-slate-600 mb-1">구매일</div>
@@ -140,7 +135,6 @@ export default function FridgeEdit() {
             </label>
           </div>
 
-          {/* 메모 */}
           <label className="block">
             <div className="text-sm text-slate-600 mb-1">메모</div>
             <input
