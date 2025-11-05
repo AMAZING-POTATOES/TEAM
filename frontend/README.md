@@ -1,16 +1,16 @@
-**/src/app
+##/src/app
 
 AuthProvider.tsx : 전역 인증 상태(Context) + 로그인 팝업 열기/닫기 상태.
 
 ProtectedRoute.tsx : 보호 라우트(로그인 필요) 구성요소.
 
 ---
-**/src/assets
+##/src/assets
 
 logo.png : 네비바 로고.
 
 ---
-**/src/components
+##/src/components
 
 Navbar.tsx : 상단 네비게이션 + 로그인 버튼 + 탭 링크. 필수 (App.tsx에서만 렌더!)
 
@@ -29,14 +29,14 @@ TagPill.tsx : 태그/칩 UI.
 Avatar.tsx : 사용자 아바타 UI.
 
 ---
-**/src/lib
+##/src/lib
 
 api.ts : 목 API(영수증 파싱/분류, CRUD 스텁) + 타입 정의(Category, FridgeItemDTO 등).
 
 useFridge.ts : 전역 냉장고 상태(샘플 데이터, CRUD, 대시보드 연동).
 
 ---
-**/src/pages
+##/src/pages
 
 Dashboard.tsx : 대시보드(통계, 레시피 섹션, “영수증 업로드” 이동).
 
@@ -49,7 +49,7 @@ FridgeEdit.tsx : 품목 수정/추가 폼.
 Recipes.tsx : 레시피 목록(목업/플레이스홀더).
 
 ---
-**루트 (src)
+##루트 (src)
 
 App.tsx : 라우터/레이아웃(여기서만 Navbar 렌더!)
 
@@ -60,7 +60,7 @@ index.css : Tailwind import + 전역 스타일.
 index.html : Vite 템플릿.
 
 ---
-**환경/도구
+##환경/도구
 
 .env : VITE_USE_MOCK, VITE_API_BASE_URL 등 환경변수.
 
