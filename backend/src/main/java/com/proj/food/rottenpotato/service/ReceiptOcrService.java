@@ -1,66 +1,127 @@
-/* 영수증 스캔 및 텍스트 파싱 */
-package com.proj.food.rottenpotato.service; 
+package com.proj.food.rottenpotato.service;
 
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ReceiptOcrService {
 
-    // application.properties에서 키 파일 경로를 읽어옵니다.
-    @Value("${google.cloud.vision.key-path}")
-    private String keyPath;
-
     /**
-     * 영수증 이미지 경로를 받아 텍스트를 추출합니다.
-     * @param imagePath 로컬에 저장된 이미지 파일 경로
-     * @return 추출된 전체 텍스트
+     * Google Vision API를 사용해 영수증에서 텍스트를 추출 (하이브리드 방식)
      */
-    public String detectReceiptText(String imagePath) {
-        // 클라이언트가 키 파일을 찾도록 시스템 속성을 설정합니다.
-        System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-        
+    public Map<String, Object> detectReceiptText(String imagePath) throws IOException {
+        List<AnnotateImageRequest> requests = new ArrayList<>();
+
+        ByteString imgBytes = ByteString.readFrom(new FileInputStream(imagePath));
+        Image img = Image.newBuilder().setContent(imgBytes).build();
+        Feature feat = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build();
+
+        AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
+                .addFeatures(feat)
+                .setImage(img)
+                .build();
+        requests.add(request);
+
         try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
-            
-            // 1. 이미지 로드
-            ByteString imgBytes = ByteString.readFrom(new FileInputStream(imagePath));
-            Image img = Image.newBuilder().setContent(imgBytes).build();
+            BatchAnnotateImagesResponse batchResponse = client.batchAnnotateImages(requests);
+            AnnotateImageResponse response = batchResponse.getResponses(0);
 
-            // 2. 요청 설정: DOCUMENT_TEXT_DETECTION 및 한국어 힌트
-            ImageContext imageContext = ImageContext.newBuilder()
-                    .addLanguageHints("ko") // 한국어 OCR 힌트
-                    .build();
-
-            Feature feature = Feature.newBuilder()
-                    .setType(Feature.Type.DOCUMENT_TEXT_DETECTION) // 문서 최적화 OCR (영수증에 적합)
-                    .build();
-            
-            AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
-                    .addFeatures(feature)
-                    .setImage(img)
-                    .setImageContext(imageContext) 
-                    .build();
-
-            // 3. API 호출 및 응답 처리
-            List<AnnotateImageResponse> response = client.batchAnnotateImages(Arrays.asList(request)).getResponsesList();
-            
-            if (response.isEmpty() || !response.get(0).hasFullTextAnnotation()) {
-                return "텍스트를 감지하지 못했습니다.";
+            if (response.hasError()) {
+                return Map.of("error", response.getError().getMessage());
             }
 
-            // 4. 추출된 전체 텍스트 반환
-            return response.get(0).getFullTextAnnotation().getText();
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "OCR 서비스 호출 중 오류 발생: " + e.getMessage(); 
+            List<EntityAnnotation> annotations = response.getTextAnnotationsList();
+            if (annotations.isEmpty()) {
+                return Map.of("text", "", "receiptDate", LocalDate.now());
+            }
+
+            String reconstructedText;
+            try {
+                reconstructedText = reconstructTextByCoordinates(annotations);
+                // ⚠️ 만약 Vision이 텍스트를 거의 못 인식했다면 전체 텍스트로 fallback
+                if (reconstructedText.split("\n").length < 3) {
+                    reconstructedText = annotations.get(0).getDescription();
+                }
+            } catch (Exception e) {
+                reconstructedText = annotations.get(0).getDescription();
+            }
+
+            System.out.println("🧾 [DEBUG] OCR 재구성 결과:\n" + reconstructedText);
+
+            LocalDate receiptDate = extractReceiptDate(reconstructedText);
+
+            return Map.of(
+                    "text", reconstructedText,
+                    "receiptDate", receiptDate
+            );
         }
+    }
+
+    /**
+     * Vision API의 좌표 정보를 이용해 줄 단위로 OCR 텍스트 재구성
+     */
+    private String reconstructTextByCoordinates(List<EntityAnnotation> annotations) {
+        List<Map<String, Object>> words = new ArrayList<>();
+        for (EntityAnnotation ann : annotations.subList(1, annotations.size())) {
+            if (ann.getBoundingPoly().getVerticesCount() >= 1) {
+                int y = ann.getBoundingPoly().getVertices(0).getY();
+                int x = ann.getBoundingPoly().getVertices(0).getX();
+                words.add(Map.of(
+                        "text", ann.getDescription(),
+                        "y", y,
+                        "x", x
+                ));
+            }
+        }
+
+        // y 좌표로 정렬
+        words.sort(Comparator.comparingInt(w -> (int) w.get("y")));
+        List<List<Map<String, Object>>> lines = new ArrayList<>();
+        List<Map<String, Object>> currentLine = new ArrayList<>();
+        int prevY = -100;
+
+        for (Map<String, Object> w : words) {
+            int y = (int) w.get("y");
+            if (Math.abs(y - prevY) > 25) {
+                if (!currentLine.isEmpty()) lines.add(new ArrayList<>(currentLine));
+                currentLine.clear();
+            }
+            currentLine.add(w);
+            prevY = y;
+        }
+        if (!currentLine.isEmpty()) lines.add(currentLine);
+
+        // x 좌표 순으로 정렬하여 한 줄씩 문자열 합침
+        StringBuilder sb = new StringBuilder();
+        for (List<Map<String, Object>> line : lines) {
+            line.sort(Comparator.comparingInt(w -> (int) w.get("x")));
+            for (Map<String, Object> w : line) {
+                sb.append(w.get("text")).append(" ");
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 영수증 상단의 날짜 추출 (예: 2025/10/31, 2025.10.31 등)
+     */
+    private LocalDate extractReceiptDate(String text) {
+        Pattern datePattern = Pattern.compile("(\\d{4}[./-]\\d{2}[./-]\\d{2})");
+        Matcher matcher = datePattern.matcher(text);
+        if (matcher.find()) {
+            String dateStr = matcher.group(1).replace(".", "-").replace("/", "-");
+            return LocalDate.parse(dateStr);
+        }
+        return LocalDate.now();
     }
 }
