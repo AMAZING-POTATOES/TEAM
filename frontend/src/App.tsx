@@ -1,43 +1,28 @@
-// src/App.tsx
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
-import UploadReceipt from "./pages/UploadReceipt";
-import Fridge from "./pages/Fridge";
-import FridgeEdit from "./pages/FridgeEdit";
-import Recipes from "./pages/Recipes";
-import ProtectedRoute from "./app/ProtectedRoute";
+import FridgeHome from "./pages/Fridge";
+import RecipeHome from "./pages/recipes/RecipeHome";
+import RecipeDetail from "./pages/recipes/RecipeDetail";
+import RecipeCommunity from "./pages/recipes/RecipeCommunity";
+import RecipeCreate from "./pages/recipes/RecipeCreate";
 
 export default function App() {
   return (
     <>
       <Navbar />
-      <Routes>
-        {/* 공개 라우트 */}
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/upload" element={<UploadReceipt />} />
-        <Route path="/recipes" element={<Recipes />} />
-
-        {/* 보호 라우트 */}
-        <Route
-          path="/fridge"
-          element={
-            <ProtectedRoute>
-              <Fridge />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/fridge/edit/:id"
-          element={
-            <ProtectedRoute>
-              <FridgeEdit />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<div className="p-8">페이지를 찾을 수 없어요.</div>} />
-      </Routes>
+      <div className="pt-16 bg-gray-50 min-h-screen">
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/fridge" element={<FridgeHome />} />
+          <Route path="/recipes" element={<RecipeHome />} />
+          <Route path="/recipes/:id" element={<RecipeDetail />} />
+          <Route path="/recipes/community" element={<RecipeCommunity />} />
+          <Route path="/recipes/create" element={<RecipeCreate />} />
+          <Route path="*" element={<div className="p-10">Not Found</div>} />
+        </Routes>
+      </div>
     </>
   );
 }
