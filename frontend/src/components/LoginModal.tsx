@@ -1,16 +1,29 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useLayoutEffect, useState } from "react";
 import type { RefObject, CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../app/AuthProvider";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import type { CredentialResponse } from "@react-oauth/google";
 
 type LoginModalProps = {
   anchorRef: RefObject<HTMLElement | HTMLButtonElement | null>;
 };
 
+
 export default function LoginModal({ anchorRef }: LoginModalProps) {
-  const { closeLogin, loginWithGoogle, mockLogin } = useAuth();
+  const {closeLogin} = useAuth();
   const panelRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
+  const googleOauthClientId = import.meta.env.VITE_CLIENT_ID;
+
+  const handleGoogleLoginSuccess = (credentialResponse: CredentialResponse) => {
+    console.log("Google Login Success:", credentialResponse);
+    // TODO: 서버로 credential 전송 및 로그인 처리
+  };
+
+  const handleGoogleLoginError = () => {
+    console.error("Google Login Failed");
+  };
 
   useLayoutEffect(() => {
     const update = () => {
@@ -48,6 +61,7 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
     };
   }, [anchorRef]);
 
+  
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -56,6 +70,18 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
+
+    
+  }, [closeLogin]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeLogin();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [closeLogin]);
 
   const node = (
@@ -64,6 +90,7 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
         ref={panelRef}
         className="w-[400px] rounded-2xl bg-white border border-gray-200 shadow-xl p-6 relative"
       >
+        
         <button
           onClick={closeLogin}
           className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
@@ -74,32 +101,22 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
 
         <div className="mx-auto mb-3 size-14 rounded-full bg-green-100 grid place-items-center"></div>
         <h3 className="text-lg font-semibold text-center">싹난감자</h3>
-        {/* ✅ 서브 카피 추가 */}
+ 
         <p className="text-sm text-slate-500 text-center mt-1">
           당신의 냉장고를 위한 똑똑한 파트너
         </p>
 
-        <button
-          onClick={loginWithGoogle}
-          className="w-full h-11 mt-5 rounded-full bg-white border border-gray-300 shadow-sm flex items-center justify-center gap-2 hover:bg-gray-50"
-        >
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            className="w-5 h-5"
-            alt=""
-          />
-          Google로 계속하기
-        </button>
-
-        {import.meta.env.VITE_USE_MOCK === "true" && (
-          <button
-            onClick={mockLogin}
-            className="w-full h-10 rounded-full mt-3 border border-gray-300 text-sm"
-            title="개발용"
-          >
-            테스트 로그인(모크)
-          </button>
-        )}
+        <GoogleOAuthProvider clientId={googleOauthClientId}>
+          <div className="flex justify-center mt-5">
+            <div className="w-[280px] flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleLoginSuccess}
+                onError={handleGoogleLoginError}
+                width="280"
+              />
+            </div>
+          </div>
+        </GoogleOAuthProvider>
 
         <p className="text-[12px] text-slate-400 mt-4 text-center whitespace-nowrap">
           로그인 시 서비스 약관 및 개인정보 처리방침에 동의하게 됩니다.
