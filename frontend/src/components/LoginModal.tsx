@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "../app/AuthProvider";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import type { CredentialResponse } from "@react-oauth/google";
+import { loginWithGoogle, saveToken, saveUser } from "../api/auth";
 
 type LoginModalProps = {
   anchorRef: RefObject<HTMLElement | HTMLButtonElement | null>;
@@ -14,15 +15,51 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
   const {closeLogin} = useAuth();
   const panelRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
+  const [isLoading, setIsLoading] = useState(false);
   const googleOauthClientId = import.meta.env.VITE_CLIENT_ID;
 
-  const handleGoogleLoginSuccess = (credentialResponse: CredentialResponse) => {
-    console.log("Google Login Success:", credentialResponse);
-    // TODO: 서버로 credential 전송 및 로그인 처리
+  const handleGoogleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      setIsLoading(true);
+      console.log("Google Login Success:", credentialResponse);
+
+      // Google ID Token 확인
+      if (!credentialResponse.credential) {
+        throw new Error("Google credential not found");
+      }
+
+      // 백엔드로 ID Token 전송
+      const response = await loginWithGoogle(credentialResponse.credential);
+      console.log("Backend login success:", response);
+
+      // JWT 토큰 저장
+      saveToken(response.accessToken);
+
+      // 사용자 정보 저장
+      saveUser({
+        userId: response.userId,
+        email: response.email,
+        name: response.name,
+        picture: response.picture,
+      });
+
+      // 로그인 모달 닫기
+      closeLogin();
+
+      // 성공 메시지 (선택사항)
+      alert(`환영합니다, ${response.name}님!`);
+
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("로그인에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLoginError = () => {
     console.error("Google Login Failed");
+    alert("Google 로그인에 실패했습니다.");
   };
 
   useLayoutEffect(() => {
@@ -107,12 +144,17 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
         </p>
 
         <GoogleOAuthProvider clientId={googleOauthClientId}>
-          <div>
+          <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
             <GoogleLogin
               onSuccess={handleGoogleLoginSuccess}
               onError={handleGoogleLoginError}
             />
           </div>
+          {isLoading && (
+            <p className="text-sm text-center text-blue-600 mt-2">
+              로그인 처리 중...
+            </p>
+          )}
         </GoogleOAuthProvider>
 
         <p className="text-[12px] text-slate-400 mt-4 text-center whitespace-nowrap">
