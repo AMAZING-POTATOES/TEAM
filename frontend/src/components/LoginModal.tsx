@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "../app/AuthProvider";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import type { CredentialResponse } from "@react-oauth/google";
-import { loginWithGoogle, saveToken, saveUser } from "../api/auth";
+import { loginWithGoogle, saveToken, saveUser, getToken, logout } from "../api/auth";
 
 type LoginModalProps = {
   anchorRef: RefObject<HTMLElement | HTMLButtonElement | null>;
@@ -16,6 +16,7 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!getToken());
   const googleOauthClientId = import.meta.env.VITE_CLIENT_ID;
 
   const handleGoogleLoginSuccess = async (credentialResponse: CredentialResponse) => {
@@ -44,7 +45,11 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
       });
 
       // 로그인 모달 닫기
-      closeLogin();
+      // 상태 업데이트
++      setIsAuthenticated(true);
++      // 로그인 모달 닫기
+       closeLogin();
+
 
       // 성공 메시지 (선택사항)
       alert(`환영합니다, ${response.name}님!`);
@@ -60,6 +65,13 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
   const handleGoogleLoginError = () => {
     console.error("Google Login Failed");
     alert("Google 로그인에 실패했습니다.");
+  };
+
+  const handleLogout = () => {
+    logout(); // accessToken, user 제거
+    setIsAuthenticated(false);
+    alert("로그아웃 되었습니다.");
+    closeLogin();
   };
 
   useLayoutEffect(() => {
@@ -121,6 +133,17 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [closeLogin]);
 
+  // 다른 탭/컴포넌트에서 localStorage 변경 시 동기화
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "accessToken") {
+        setIsAuthenticated(!!localStorage.getItem("accessToken"));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const node = (
     <div style={style}>
       <div
@@ -144,16 +167,27 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
         </p>
 
         <GoogleOAuthProvider clientId={googleOauthClientId}>
-          <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
-            <GoogleLogin
-              onSuccess={handleGoogleLoginSuccess}
-              onError={handleGoogleLoginError}
-            />
-          </div>
-          {isLoading && (
-            <p className="text-sm text-center text-blue-600 mt-2">
-              로그인 처리 중...
-            </p>
+          {isAuthenticated ? (
+            <div className="flex flex-col items-center">    
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-900"
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
+              <GoogleLogin
+                onSuccess={handleGoogleLoginSuccess}
+                onError={handleGoogleLoginError}
+              />
+              {isLoading && (
+                <p className="text-sm text-center text-blue-600 mt-2">
+                  로그인 처리 중...
+                </p>
+              )}
+            </div>
           )}
         </GoogleOAuthProvider>
 
