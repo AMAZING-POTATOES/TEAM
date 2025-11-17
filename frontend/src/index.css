@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* ===== Theme tokens ===== */
+:root {
+  --color-primary: #4CAF50;
+  --color-primary-50: #C8E6C9;
+
+  --bg-light: #ffffff;
+  --bg-app: #f6f8f6;
+  --bg-card: #ffffff;
+
+  --text-main: #333333;
+  --text-secondary: #888888;
+
+  --border-soft: #E0E0E0;
+  --warn: #F44336;
+}
+
+html.dark {
+  --bg-light: #102216;
+  --bg-app: #102216;
+  --bg-card: #1a2b20;
+
+  --text-main: #e6e6e6;
+  --text-secondary: #9aa6a0;
+
+  --border-soft: #2f3b34;
+}
+
+body {
+  background: var(--bg-app);
+  color: var(--text-main);
+}
+
+.input { @apply h-10 px-3 rounded-md border border-[color:var(--border-soft)] bg-white w-full; }

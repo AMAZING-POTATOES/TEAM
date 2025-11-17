@@ -1,0 +1,11 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "interactive",
+
+     "java.project.sourcePaths": [
+        "backend/src/main/java",
+        "backend/src/test/java"
+    ],
+    "java.project.outputPath": "backend/build/classes",
+    "gradle.project.buildFile": "backend/build.gradle"
+}
