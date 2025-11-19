@@ -4,19 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
+import org.example.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Base64;
 import java.util.Objects;
 
 @Service
@@ -25,19 +22,18 @@ public class GoogleAuthService {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserRepository userRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // Frontend의 VITE_CLIENT_ID와 동일해야 함
     @Value("${google.oauth.client-id:}")
     private String googleClientId;
 
-    // 간단한 시크릿(데모용). 운영에서는 안전한 키 보관 필요
-    @Value("${security.jwt.secret:change-this-secret-in-production}")
-    private String jwtSecret;
-
     public record GoogleUser(String email, String name, String picture, String sub) {}
 
-    public GoogleAuthService(UserRepository userRepository) {
+    public GoogleAuthService(UserRepository userRepository,
+                             JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     public GoogleUser verifyIdToken(String idToken) throws Exception {
@@ -98,40 +94,7 @@ public class GoogleAuthService {
     }
 
     public String issueJwt(String email, long userId, String name) {
-        // 간단한 HS256 JWT 구현 (외부 라이브러리 없이)
-        String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
-        long nowSec = Instant.now().getEpochSecond();
-        long expSec = nowSec + 60L * 60L * 24L; // 24h
-        String payloadJson = String.format(
-                "{\"sub\":\"%s\",\"iss\":\"amazing-potatoes\",\"iat\":%d,\"exp\":%d,\"email\":\"%s\",\"name\":\"%s\"}",
-                userId, nowSec, expSec, escapeJson(email), escapeJson(name)
-        );
-
-        String header = base64Url(headerJson.getBytes(StandardCharsets.UTF_8));
-        String payload = base64Url(payloadJson.getBytes(StandardCharsets.UTF_8));
-        String signingInput = header + "." + payload;
-        String signature = hmacSha256(signingInput, jwtSecret);
-        return signingInput + "." + signature;
-    }
-
-    private static String base64Url(byte[] bytes) {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private static String hmacSha256(String data, String secret) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] sig = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return base64Url(sig);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to sign JWT", e);
-        }
-    }
-
-    private static String escapeJson(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        return jwtTokenProvider.generateToken(userId, email, name);
     }
 }
 
