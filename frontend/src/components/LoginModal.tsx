@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "../app/AuthProvider";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import type { CredentialResponse } from "@react-oauth/google";
-import { loginWithGoogle, saveToken, saveUser, getToken, logout } from "../api/auth";
+import { loginWithGoogle, saveToken, saveUser, getToken } from "../api/auth";
 
 type LoginModalProps = {
   anchorRef: RefObject<HTMLElement | HTMLButtonElement | null>;
@@ -12,7 +12,7 @@ type LoginModalProps = {
 
 
 export default function LoginModal({ anchorRef }: LoginModalProps) {
-  const {closeLogin} = useAuth();
+  const { closeLogin, setUser, logout: authLogout } = useAuth();
   const panelRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
   const [isLoading, setIsLoading] = useState(false);
@@ -44,12 +44,19 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
         picture: response.picture,
       });
 
-      // 로그인 모달 닫기
-      // 상태 업데이트
-+      setIsAuthenticated(true);
-+      // 로그인 모달 닫기
-       closeLogin();
+      // AuthProvider 상태 업데이트
+      setUser({
+        userId: response.userId,
+        email: response.email,
+        name: response.name,
+        picture: response.picture,
+      });
 
+      // 인증 상태 업데이트
+      setIsAuthenticated(true);
+
+      // 로그인 모달 닫기
+      closeLogin();
 
       // 성공 메시지 (선택사항)
       alert(`환영합니다, ${response.name}님!`);
@@ -68,10 +75,9 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
   };
 
   const handleLogout = () => {
-    logout(); // accessToken, user 제거
+    authLogout(); // AuthProvider의 logout 호출 (localStorage 정리 + 상태 업데이트)
     setIsAuthenticated(false);
     alert("로그아웃 되었습니다.");
-    closeLogin();
   };
 
   useLayoutEffect(() => {

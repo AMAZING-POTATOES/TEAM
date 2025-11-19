@@ -1,25 +1,81 @@
 import { useNavigate } from "react-router-dom";
-import { useFridge } from "../lib/useFridge";
-import type { FridgeItemDTO } from "../lib/api";
-
-function daysToExpire(it: FridgeItemDTO): number | null {
-  if (!it.expireDate) return null;
-  const end = new Date(it.expireDate);
-  const today = new Date();
-  end.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
+import { useState, useEffect } from "react";
+import { getDashboardData } from "../api/dashboard";
+import type { DashboardData } from "../api/dashboard";
+import { useAuth } from "../app/AuthProvider";
 
 export default function Dashboard() {
   const nav = useNavigate();
-  const { items } = useFridge();
+  const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const total = items.length;
-  const expiringSoon = items.filter((it) => {
-    const d = daysToExpire(it);
-    return d !== null && d >= 0 && d <= 3;
-  }).length;
+  // 대시보드 데이터 로드 - user 변경 시마다 실행
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        console.log("🔄 Dashboard: 데이터 로딩 시작...");
+        console.log("👤 Dashboard: 현재 사용자:", user);
+        setLoading(true);
+        setError(null);
+
+        console.log("📡 Dashboard: API 호출 중...");
+        const data = await getDashboardData();
+        console.log("✅ Dashboard: 데이터 수신 성공:", data);
+
+        setDashboardData(data);
+      } catch (err) {
+        console.error("❌ Dashboard load failed:", err);
+        if (err instanceof Error) {
+          console.error("에러 메시지:", err.message);
+          console.error("에러 스택:", err.stack);
+        }
+        setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
+      } finally {
+        console.log("🏁 Dashboard: 로딩 완료");
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, [user]); // user 상태 변경 시 데이터 재로드
+
+  const total = dashboardData?.refrigeratorItemCount ?? 0;
+  const expiringSoon = dashboardData?.expiringItems.length ?? 0;
+  const popularRecipes = dashboardData?.popularRecipes ?? [];
+  const recommendedRecipes = dashboardData?.recommendedRecipes ?? [];
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-t-transparent border-[color:var(--color-primary)] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[color:var(--text-secondary)]">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-center max-w-md px-4">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">데이터를 불러올 수 없습니다</h2>
+          <p className="text-[color:var(--text-secondary)] mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -85,27 +141,94 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
-            이 재료로 만들 수 있어요! 인기 레시피
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded-[20px] overflow-hidden bg-[var(--bg-card)] border border-[color:var(--border-soft)] hover:shadow-md transition"
-              >
-                <div className="aspect-video bg-slate-100 grid place-items-center text-slate-400">
-                  이미지 영역
-                </div>
-                <div className="p-4">
-                  <div className="text-[16px] font-bold truncate">레시피 제목</div>
-                  <div className="text-[13px] text-[color:var(--text-secondary)]">
-                    간단한 설명
+        {/* 추천 레시피 섹션 */}
+        {recommendedRecipes.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
+              이 재료로 만들 수 있어요! 추천 레시피
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recommendedRecipes.slice(0, 4).map((recipe) => (
+                <div
+                  key={recipe.recipeId}
+                  onClick={() => nav(`/recipes/${recipe.recipeId}`)}
+                  className="rounded-[20px] overflow-hidden bg-[var(--bg-card)] border border-[color:var(--border-soft)] hover:shadow-md transition cursor-pointer"
+                >
+                  <div className="aspect-video bg-slate-100 grid place-items-center text-slate-400 overflow-hidden">
+                    {recipe.mainImageUrl ? (
+                      <img
+                        src={recipe.mainImageUrl}
+                        alt={recipe.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>🍳</span>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="text-[16px] font-bold truncate">{recipe.title}</div>
+                    <div className="text-[13px] text-[color:var(--text-secondary)] line-clamp-2">
+                      {recipe.description || `${recipe.cookingTime}분 · ${recipe.difficulty}`}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2 text-[12px] text-[color:var(--text-secondary)]">
+                      <span>👍 {recipe.likeCount}</span>
+                      <span>⭐ {recipe.averageRating.toFixed(1)}</span>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 인기 레시피 섹션 */}
+        <section className="mt-10">
+          <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
+            지금 인기있는 레시피
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {popularRecipes.length > 0 ? (
+              popularRecipes.slice(0, 4).map((recipe) => (
+                <div
+                  key={recipe.recipeId}
+                  onClick={() => nav(`/recipes/${recipe.recipeId}`)}
+                  className="rounded-[20px] overflow-hidden bg-[var(--bg-card)] border border-[color:var(--border-soft)] hover:shadow-md transition cursor-pointer"
+                >
+                  <div className="aspect-video bg-slate-100 grid place-items-center text-slate-400 overflow-hidden">
+                    {recipe.mainImageUrl ? (
+                      <img
+                        src={recipe.mainImageUrl}
+                        alt={recipe.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>🍳</span>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="text-[16px] font-bold truncate">{recipe.title}</div>
+                    <div className="text-[13px] text-[color:var(--text-secondary)] line-clamp-2">
+                      {recipe.description || `${recipe.cookingTime}분 · ${recipe.difficulty}`}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2 text-[12px] text-[color:var(--text-secondary)]">
+                      <span>👍 {recipe.likeCount}</span>
+                      <span>⭐ {recipe.averageRating.toFixed(1)}</span>
+                      <span>👁️ {recipe.viewCount}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-[color:var(--text-secondary)]">
+                <p className="text-lg">아직 등록된 레시피가 없습니다.</p>
+                <button
+                  onClick={() => nav("/recipes")}
+                  className="mt-4 px-4 py-2 rounded-lg bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90"
+                >
+                  레시피 둘러보기
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </section>
       </main>
