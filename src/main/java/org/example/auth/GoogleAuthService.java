@@ -2,8 +2,11 @@ package org.example.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.entity.User;
+import org.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -14,14 +17,14 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 
 @Service
 public class GoogleAuthService {
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserRepository userRepository;
 
     // Frontend의 VITE_CLIENT_ID와 동일해야 함
     @Value("${google.oauth.client-id:}")
@@ -31,11 +34,11 @@ public class GoogleAuthService {
     @Value("${security.jwt.secret:change-this-secret-in-production}")
     private String jwtSecret;
 
-    // 데모용 인메모리 사용자 저장소 (이메일 -> 사용자ID)
-    private final Map<String, Long> emailToUserId = new ConcurrentHashMap<>();
-    private volatile long userSequence = 1L;
-
     public record GoogleUser(String email, String name, String picture, String sub) {}
+
+    public GoogleAuthService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public GoogleUser verifyIdToken(String idToken) throws Exception {
         // 구글 토큰 검증 엔드포인트 호출
@@ -67,8 +70,31 @@ public class GoogleAuthService {
         return new GoogleUser(email, name, picture, sub);
     }
 
-    public long ensureUserId(String email) {
-        return emailToUserId.computeIfAbsent(email, k -> userSequence++);
+    @Transactional
+    public long ensureUser(String googleId, String email, String name) {
+        return userRepository.findByGoogleId(googleId)
+                .map(existingUser -> {
+                    boolean changed = false;
+                    if (!Objects.equals(existingUser.getEmail(), email)) {
+                        existingUser.setEmail(email);
+                        changed = true;
+                    }
+                    if (!Objects.equals(existingUser.getName(), name)) {
+                        existingUser.setName(name);
+                        changed = true;
+                    }
+                    if (changed) {
+                        userRepository.save(existingUser);
+                    }
+                    return existingUser.getUserId();
+                })
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setGoogleId(googleId);
+                    newUser.setEmail(email);
+                    newUser.setName(name);
+                    return userRepository.save(newUser).getUserId();
+                });
     }
 
     public String issueJwt(String email, long userId, String name) {

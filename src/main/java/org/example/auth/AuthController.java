@@ -22,7 +22,7 @@ public class AuthController {
     public ResponseEntity<?> google(@RequestBody GoogleLoginRequest request) {
         try {
             var user = googleAuthService.verifyIdToken(request.getIdToken());
-            long userId = googleAuthService.ensureUserId(user.email());
+            long userId = googleAuthService.ensureUser(user.sub(), user.email(), user.name());
             String jwt = googleAuthService.issueJwt(user.email(), userId, user.name());
 
             GoogleLoginResponse resp = new GoogleLoginResponse();
