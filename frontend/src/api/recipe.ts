@@ -27,7 +27,7 @@ export interface RecipeSummary {
 export interface RecipeDetail extends RecipeSummary {
   ingredients: RecipeIngredient[];
   steps: RecipeStep[];
-  tags: string[];
+  tags: string[] | { tagName: string }[]; // 백엔드가 객체 배열로 보낼 수도 있음
 }
 
 export interface RecipeIngredient {
