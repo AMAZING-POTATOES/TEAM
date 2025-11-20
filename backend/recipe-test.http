@@ -1,0 +1,8 @@
+### 레시피 추천 최종 로직 검증
+POST http://localhost:8080/inventory/recommend
+Content-Type: application/json
+
+[
+    "닭고기",
+    "양파"
+]
