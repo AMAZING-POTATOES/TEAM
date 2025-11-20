@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createRecipe, type RecipeCreateRequest } from "../../api/recipe";
+import { useAuth } from "../../app/AuthProvider";
 
 type Ingredient = { name: string; amount?: string };
 type Step = { text: string };
 
 export default function RecipeCreate() {
   const nav = useNavigate();
+  const { user } = useAuth();
+
+  // 기본 정보
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [mainImageUrl, setMainImageUrl] = useState("");
+  const [servings, setServings] = useState("");
 
   const [fileName, setFileName] = useState<string>("파일 선택된 파일 없음");
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -15,12 +24,13 @@ export default function RecipeCreate() {
 
   const [level, setLevel] =
     useState<"선택" | "쉬움" | "보통" | "어려움">("선택");
-  const [time, setTime] =
-    useState<"선택" | "10분" | "20분" | "30분" | "60분+">("선택");
+  const [time, setTime] = useState("");
   const [category, setCategory] =
     useState<"한식" | "중식" | "양식" | "일식" | "디저트" | "기타">("한식");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+
+  const [submitting, setSubmitting] = useState(false);
 
   const addIngredient = () => {
     if (!ingName.trim()) return;
@@ -31,10 +41,76 @@ export default function RecipeCreate() {
 
   const addStep = () => setSteps([...steps, { text: "" }]);
 
-  const submit = () => {
-    // TODO: API 연결
-    alert("작성 완료 (목업)");
-    nav("/recipes/community");
+  const submit = async () => {
+    // 로그인 확인
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    // 유효성 검사
+    if (!title.trim()) {
+      alert("레시피 제목을 입력해주세요.");
+      return;
+    }
+
+    if (level === "선택") {
+      alert("난이도를 선택해주세요.");
+      return;
+    }
+
+    if (!time || time === "선택") {
+      alert("조리 시간을 입력해주세요.");
+      return;
+    }
+
+    if (ingredients.length === 0) {
+      alert("재료를 최소 1개 이상 추가해주세요.");
+      return;
+    }
+
+    if (steps.length === 0 || !steps[0].text.trim()) {
+      alert("조리 순서를 최소 1개 이상 작성해주세요.");
+      return;
+    }
+
+    // 난이도 매핑
+    const difficultyMap: Record<string, "EASY" | "MEDIUM" | "HARD"> = {
+      "쉬움": "EASY",
+      "보통": "MEDIUM",
+      "어려움": "HARD",
+    };
+
+    try {
+      setSubmitting(true);
+
+      const recipeData: RecipeCreateRequest = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        mainImageUrl: mainImageUrl.trim() || undefined,
+        difficulty: difficultyMap[level],
+        cookingTime: parseInt(time, 10),
+        servings: servings ? parseInt(servings, 10) : undefined,
+        category: category,
+        ingredients: ingredients.map(i => ({
+          ingredientName: i.name,
+          quantity: i.amount || "",
+        })),
+        steps: steps
+          .filter(s => s.text.trim())
+          .map(s => ({ description: s.text.trim() })),
+        tags: tags.map(t => ({ tagName: t })),
+      };
+
+      const newRecipe = await createRecipe(recipeData);
+      alert("레시피가 성공적으로 작성되었습니다!");
+      nav(`/recipes/${newRecipe.recipeId}`);
+    } catch (err) {
+      console.error("레시피 작성 실패:", err);
+      alert(err instanceof Error ? err.message : "레시피 작성에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -44,16 +120,48 @@ export default function RecipeCreate() {
         <h1 className="text-[28px] font-bold">새로운 레시피 작성</h1>
       </div>
 
+      {/* 제목 및 설명 */}
       <section className="rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">
-        <label className="block text-sm font-semibold mb-2">대표 이미지</label>
-        <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 h-40 flex items-center justify-center text-gray-500">
-          {fileName}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              레시피 제목 <span className="text-red-500">*</span>
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="예: 김치찌개"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-2">레시피 설명</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="이 레시피에 대한 간단한 설명을 작성해주세요."
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+              rows={3}
+            />
+          </div>
         </div>
-        <p className="mt-2 text-xs text-gray-500">PNG, JPG, GIF · 최대 10MB</p>
+      </section>
+
+      <section className="mt-6 rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">
+        <label className="block text-sm font-semibold mb-2">대표 이미지 URL</label>
+        <input
+          value={mainImageUrl}
+          onChange={(e) => setMainImageUrl(e.target.value)}
+          placeholder="이미지 URL을 입력해주세요 (선택사항)"
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+        />
+        <p className="mt-2 text-xs text-gray-500">외부 이미지 URL을 입력하거나 비워두세요</p>
       </section>
 
       <section className="mt-8 rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">
-        <label className="block text-sm font-semibold mb-3">필요한 재료</label>
+        <label className="block text-sm font-semibold mb-3">
+          필요한 재료 <span className="text-red-500">*</span>
+        </label>
 
         <div className="flex gap-3">
           <input
@@ -98,7 +206,9 @@ export default function RecipeCreate() {
       </section>
 
       <section className="mt-8 rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">
-        <label className="block text-sm font-semibold mb-3">조리 방법</label>
+        <label className="block text-sm font-semibold mb-3">
+          조리 방법 <span className="text-red-500">*</span>
+        </label>
 
         <ol className="space-y-3">
           {steps.map((s, idx) => (
@@ -128,11 +238,13 @@ export default function RecipeCreate() {
         </button>
       </section>
 
-      {/* 난이도/시간/카테고리/태그 */}
+      {/* 난이도/시간/카테고리/인분/태그 */}
       <section className="mt-8 rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">난이도</label>
+            <label className="block text-sm font-semibold mb-2">
+              난이도 <span className="text-red-500">*</span>
+            </label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value as any)}
@@ -145,18 +257,17 @@ export default function RecipeCreate() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2">시간</label>
-            <select
+            <label className="block text-sm font-semibold mb-2">
+              조리 시간 (분) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
               value={time}
-              onChange={(e) => setTime(e.target.value as any)}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2"
-            >
-              <option>선택</option>
-              <option>10분</option>
-              <option>20분</option>
-              <option>30분</option>
-              <option>60분+</option>
-            </select>
+              onChange={(e) => setTime(e.target.value)}
+              placeholder="예: 30"
+              min="1"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold mb-2">카테고리</label>
@@ -172,6 +283,17 @@ export default function RecipeCreate() {
               <option>디저트</option>
               <option>기타</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-2">인분</label>
+            <input
+              type="number"
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
+              placeholder="예: 2"
+              min="1"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold mb-2">태그</label>
@@ -231,15 +353,24 @@ export default function RecipeCreate() {
       <div className="mt-8 flex items-center justify-end gap-2">
         <button
           onClick={() => nav(-1)}
-          className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+          disabled={submitting}
+          className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           취소
         </button>
         <button
           onClick={submit}
-          className="rounded-full bg-[#4CAF50] px-5 py-2 text-white text-sm hover:opacity-90"
+          disabled={submitting}
+          className="rounded-full bg-[#4CAF50] px-5 py-2 text-white text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          작성 완료
+          {submitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+              작성 중...
+            </>
+          ) : (
+            "작성 완료"
+          )}
         </button>
       </div>
     </div>

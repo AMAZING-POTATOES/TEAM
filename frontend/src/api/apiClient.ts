@@ -77,8 +77,21 @@ export async function apiRequest<T>(
       return undefined as T;
     }
 
+    // Content-Length가 0이거나 응답 body가 비어있는 경우 처리
+    const contentLength = response.headers.get('Content-Length');
+    if (contentLength === '0') {
+      console.log('✅ Empty response body (Content-Length: 0)');
+      return undefined as T;
+    }
+
     // JSON 응답 파싱
-    const data = await response.json();
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      console.log('✅ Empty response body');
+      return undefined as T;
+    }
+
+    const data = JSON.parse(text);
     console.log('✅ API Response Data:', data);
     return data;
   } catch (error) {

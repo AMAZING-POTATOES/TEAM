@@ -21,9 +21,10 @@ export default function App() {
           <Route path="/fridge" element={<FridgeHome />} />
           <Route path="/fridge/edit/:id" element={<FridgeEdit />} />
           <Route path="/recipes" element={<RecipeHome />} />
-          <Route path="/recipes/:id" element={<RecipeDetail />} />
+          {/* 정적 라우트를 동적 라우트보다 먼저 선언 */}
           <Route path="/recipes/community" element={<RecipeCommunity />} />
           <Route path="/recipes/create" element={<RecipeCreate />} />
+          <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="*" element={<div className="p-10">Not Found</div>} />
         </Routes>
       </div>
