@@ -1,17 +1,27 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { Recipe } from "../../lib/recipes";
-import { getRecipeById } from "../../services/recipes";
+import { getRecipeDetail, incrementViewCount, type RecipeDetail as RecipeDetailType } from "../../api/recipe";
+import { useAuth } from "../../app/AuthProvider";
 import RecipeRating from "../../components/RecipeRating";
 import Tag from "../../components/Tag";
 
 type Tab = "ingredients" | "steps";
 
+// 난이도 매핑
+const difficultyMap: Record<string, string> = {
+  EASY: "쉬움",
+  MEDIUM: "보통",
+  HARD: "어려움",
+};
+
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const nav = useNavigate();
+  const { user } = useAuth();
 
-  const [data, setData] = useState<Recipe | null>(null);
+  const [data, setData] = useState<RecipeDetailType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<Tab>("ingredients");
 
   const topRef = useRef<HTMLDivElement>(null);
@@ -25,18 +35,49 @@ export default function RecipeDetail() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+
+    const fetchRecipe = async () => {
       if (!id) return;
-      const r = await getRecipeById(id);
-      if (mounted) setData(r);
-      requestAnimationFrame(() =>
-        topRef.current?.scrollIntoView({ behavior: "smooth" })
-      );
-    })();
+
+      try {
+        console.log("🔄 RecipeDetail: 레시피 로딩 시작...", id);
+        console.log("👤 RecipeDetail: 현재 사용자:", user);
+        setLoading(true);
+        setError(null);
+
+        const recipeId = parseInt(id, 10);
+
+        // 레시피 상세 조회
+        const recipe = await getRecipeDetail(recipeId);
+
+        // 조회수 증가
+        await incrementViewCount(recipeId).catch(() => {
+          console.warn("조회수 증가 실패 (무시)");
+        });
+
+        if (mounted) {
+          setData(recipe);
+          console.log("✅ RecipeDetail: 레시피 수신 성공:", recipe.title);
+          requestAnimationFrame(() =>
+            topRef.current?.scrollIntoView({ behavior: "smooth" })
+          );
+        }
+      } catch (err) {
+        console.error("❌ RecipeDetail: 레시피 로딩 실패:", err);
+        if (mounted) {
+          setError(err instanceof Error ? err.message : "레시피를 불러오는데 실패했습니다.");
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchRecipe();
+
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     const ingEl = ingredientsRef.current;
@@ -96,35 +137,65 @@ export default function RecipeDetail() {
   };
 
   const ratingText = useMemo(() => {
-    if (!data?.rating) return null;
+    if (!data?.averageRating) return null;
     return {
-      r: data.rating.toFixed(1),
-      cnt: data.ratingCount ? data.ratingCount.toLocaleString() : undefined,
+      r: data.averageRating.toFixed(1),
+      cnt: undefined, // 백엔드에서 ratingCount가 없음
     };
   }, [data]);
 
-  if (!data) {
+  // 로딩 상태
+  if (loading) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-16">
-        <p className="text-gray-500">레시피를 불러오는 중이에요…</p>
-        <button
-          onClick={() => nav(-1)}
-          className="mt-4 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
-        >
-          돌아가기
-        </button>
+      <div className="mx-auto max-w-4xl px-6 py-16 text-center">
+        <div className="inline-block w-12 h-12 border-4 border-t-transparent border-[#4CAF50] rounded-full animate-spin"></div>
+        <p className="mt-4 text-gray-500">레시피를 불러오는 중...</p>
       </div>
     );
   }
 
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-16">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">레시피를 불러올 수 없습니다</h2>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-lg bg-[#4CAF50] text-white hover:opacity-90"
+            >
+              다시 시도
+            </button>
+            <button
+              onClick={() => nav(-1)}
+              className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+            >
+              돌아가기
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 데이터가 없음
+  if (!data) {
+    return null;
+  }
+
   return (
     <div ref={topRef} className="mx-auto max-w-4xl px-6 py-10">
-      {data.coverUrl ? (
+      {data.mainImageUrl ? (
         <div className="h-[320px] w-full overflow-hidden rounded-2xl bg-gray-100">
-          <img src={data.coverUrl} alt={data.title} className="h-full w-full object-cover" />
+          <img src={data.mainImageUrl} alt={data.title} className="h-full w-full object-cover" />
         </div>
       ) : (
-        <div className="h-[320px] w-full rounded-2xl bg-gray-100" />
+        <div className="h-[320px] w-full rounded-2xl bg-gray-100 flex items-center justify-center text-8xl">
+          🍳
+        </div>
       )}
 
       <header className="mt-6">
@@ -138,17 +209,27 @@ export default function RecipeDetail() {
         <div className="mt-2 flex flex-wrap items-center gap-3 text-gray-500">
           {data.authorName && <span>작성자 {data.authorName}</span>}
           {data.authorName && <span>•</span>}
-          <span>⏱ {data.timeMinutes}분</span>
+          <span>⏱ {data.cookingTime}분</span>
           <span>•</span>
-          <span>{data.level}</span>
+          <span>{difficultyMap[data.difficulty] || data.difficulty}</span>
+          {data.servings && (
+            <>
+              <span>•</span>
+              <span>{data.servings}인분</span>
+            </>
+          )}
           {ratingText && (
             <>
               <span>•</span>
-              <RecipeRating value={data.rating ?? 0} />
+              <RecipeRating value={data.averageRating ?? 0} />
               {ratingText.cnt && <span className="text-sm text-gray-400">{ratingText.cnt}명 참여</span>}
             </>
           )}
         </div>
+
+        {data.description && (
+          <p className="mt-3 text-gray-600">{data.description}</p>
+        )}
 
         {!!data.tags?.length && (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -197,9 +278,9 @@ export default function RecipeDetail() {
             {data.ingredients.map((i, idx) => (
               <li key={idx} className="flex items-center justify-between py-3">
                 <span className="font-medium text-[#2e7d32]">
-                  {i.name} {i.inStock ? "(보유)" : ""}
+                  {i.ingredientName}
                 </span>
-                <span className="text-[#2e7d32]">{i.amount ?? "적당량"}</span>
+                <span className="text-[#2e7d32]">{i.quantity || "적당량"}</span>
               </li>
             ))}
           </ul>
@@ -209,12 +290,12 @@ export default function RecipeDetail() {
       <section ref={stepsRef} data-observe-id="steps" className="mt-8">
         <h3 className="mb-3 font-semibold">조리 순서</h3>
         <ol className="space-y-3">
-          {data.steps.map((s, idx) => (
-            <li key={idx} className="flex items-start gap-3">
+          {data.steps.map((s) => (
+            <li key={s.stepNumber} className="flex items-start gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4CAF50]/15 font-semibold text-[#2e7d32]">
-                {idx + 1}
+                {s.stepNumber}
               </span>
-              <div className="flex-1 rounded-xl bg-[#4CAF50]/10 px-4 py-3">{s}</div>
+              <div className="flex-1 rounded-xl bg-[#4CAF50]/10 px-4 py-3">{s.description}</div>
             </li>
           ))}
         </ol>
