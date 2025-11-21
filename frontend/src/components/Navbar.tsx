@@ -2,10 +2,11 @@ import { useRef } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/AuthProvider";
 import LoginModal from "./LoginModal";
+import logo from "../assets/logo.png";
 
 function navClass({ isActive }: { isActive: boolean }) {
   return [
-    "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+    "px-3 py-2 rounded-lg text-base font-medium transition-colors",
     isActive
       ? "text-[#2e7d32] bg-[#4CAF50]/10"
       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100",
@@ -38,10 +39,7 @@ export default function Navbar() {
           className="flex items-center gap-2 shrink-0"
           aria-label="홈으로 이동"
         >
-          <img src="/logo.png" alt="싹난감자" className="w-7 h-7 rounded-full" />
-          <span className="font-semibold tracking-tight text-slate-900">
-            싹난감자
-          </span>
+          <img src={logo} alt="싹난감자" className="w-28 h-8 rounded-full" />
         </button>
 
         <nav className="hidden md:flex items-center gap-2">

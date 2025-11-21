@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { getDashboardData } from "../api/dashboard";
 import type { DashboardData } from "../api/dashboard";
 import { useAuth } from "../app/AuthProvider";
+import dashboardBannerVideo from "../assets/banner.mp4";
 
 export default function Dashboard() {
   const nav = useNavigate();
@@ -80,6 +81,18 @@ export default function Dashboard() {
   return (
     <div>
       <main className="max-w-6xl mx-auto px-4 py-8">
+        <section className="rounded-[20px] overflow-hidden mb-6 bg-black">
+          <video
+            className="w-full h-auto max-h-[280px] object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+          >
+            <source src={dashboardBannerVideo} type="video/mp4" />
+            브라우저가 video 태그를 지원하지 않습니다.
+          </video>
+        </section>
         <section
           className="rounded-[20px] p-6 md:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
           style={{
