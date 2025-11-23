@@ -1,0 +1,24 @@
+### 1. [필수] 재고 등록: ItemService에 데이터 채우기
+# AI 추천을 위해 재료 데이터가 메모리에 있어야 합니다.
+POST http://localhost:8080/receipt/upload
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="receipt.png"
+
+< C:\Users\emong\Desktop\receiptdata\KakaoTalk_20251103_171545750.png
+
+--boundary--
+
+### 2. AI 레시피 생성 요청: Node.js 서버 호출
+# 서버가 8080에서 실행 중이고 Node.js 서버가 8000에서 실행 중이어야 합니다.
+POST http://localhost:8080/inventory/ai-generate
+Content-Type: application/json
+
+{
+    "user_preferences": {
+        "serving_size": 2,
+        "difficulty": "EASY"
+    },
+    "additional_requirements": "따뜻한 국물 요리를 추천해주세요."
+}
