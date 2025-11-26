@@ -1,8 +1,10 @@
-// src/components/IntroOverlay.tsx
 import { useState, useEffect, useRef } from "react";
 import Navbar from "./Navbar";
 import dashboardBannerVideo from "../assets/banner.mp4";
-import bgImage from "../assets/Overlay_bg.png"; 
+import rottenFood from "../assets/rotten_food.png";
+import receiptImage from "../assets/receipt.png";
+import recipeTopRight from "../assets/recipe_top_right.png";
+import recipeBottomLeft from "../assets/recipe_bottom_left.png";
 
 type IntroOverlayProps = {
   isLoggedIn: boolean;
@@ -22,6 +24,10 @@ export default function IntroOverlay({
     useState<Record<string, boolean>>({});
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
   const videoSectionRef = useRef<HTMLElement | null>(null);
+
+  // 1번 슬라이드: 이미지 페이드 인/업용 state + ref
+  const [imageVisible, setImageVisible] = useState(false);
+  const imageRef = useRef<HTMLDivElement | null>(null);
 
   // 텍스트 섹션 페이드 인용 Observer
   useEffect(() => {
@@ -53,6 +59,26 @@ export default function IntroOverlay({
     (el: HTMLElement | null): void => {
       sectionRefs.current[index] = el;
     };
+
+  // 1번 슬라이드 이미지 Observer
+  useEffect(() => {
+    const el = imageRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setImageVisible(true);
+          }
+        });
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // 마지막 영상 섹션 보이면 3초 뒤 자동 전환
   const visibleTimerRef = useRef<number | null>(null);
@@ -118,24 +144,23 @@ export default function IntroOverlay({
       >
         <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
           {/* HERO 슬라이드 */}
-          <section className="snap-start min-h-[calc(100vh-80px)] flex flex-col items-center justify-center text-center space-y-6">
-            <p className="text-xs md:text-sm font-semibold tracking-[0.12em] uppercase text-emerald-600">
+          <section className="snap-start min-h-[calc(100vh-80px)] flex flex-col items-center justify-center text-center space-y-7">
+            <p className="text-sm md:text-base font-semibold tracking-[0.12em] uppercase text-emerald-600">
               냉장고 재료 관리 서비스 · 싹난감자
             </p>
-            <h1 className="text-[28px] md:text-[40px] font-extrabold leading-tight">
+            <h1 className="text-[32px] md:text-[44px] font-extrabold leading-tight">
               <span className="block">싹난감자</span>
-              <span className="block mt-1">
+              <span className="block mt-2">
                 <span className="relative inline-block">
                   <span className="relative z-10">
                     당신의 냉장고를 위한{" "}
                     <span className="font-extrabold">똑똑한 파트너</span>
                   </span>
-                  {/* 형광펜 하이라이트 느낌 */}
-                  <span className="absolute inset-x-0 bottom-0 h-2 bg-emerald-200/70 rounded-md -z-0" />
+                  <span className="absolute inset-x-0 bottom-0 h-3 bg-emerald-200/70 rounded-md -z-0" />
                 </span>
               </span>
             </h1>
-            <p className="max-w-xl text-[13px] md:text-[15px] text-slate-600 leading-relaxed">
+            <p className="max-w-xl text-[15px] md:text-[18px] text-slate-600 leading-relaxed">
               <span className="font-semibold text-slate-900">
                 잊혀져 가던 식재료를 다시 꺼내 쓰게 만드는 서비스.
               </span>
@@ -146,7 +171,7 @@ export default function IntroOverlay({
               </span>
               을 한 번에 제공합니다.
             </p>
-            <p className="text-[11px] md:text-[13px] text-slate-400">
+            <p className="text-[13px] md:text-[15px] text-slate-400">
               아래로 스크롤하며 싹난감자가{" "}
               <span className="font-medium text-slate-500">
                 어떻게 재료를 정리하고, 레시피와 연결하는지
@@ -155,37 +180,56 @@ export default function IntroOverlay({
             </p>
           </section>
 
-          {/* 슬라이드 1 */}
+          {/* 슬라이드 1 : 텍스트 센터 + 하단 rotten_food 이미지 페이드 인 */}
           <section
             id={SECTION_IDS[0]}
             ref={setSectionRef(0)}
-            className={`${baseSectionCls} ${
+            className={`snap-start relative min-h-[calc(100vh-80px)] text-center transition-all duration-[1200ms] ${
               visibleSections[SECTION_IDS[0]] ? showCls : hiddenCls
             }`}
           >
-            <div className="text-3xl mb-1">🥔</div>
-            <h2 className="text-xl md:text-2xl font-bold">
-              냉장고 속 잠자는 재료,
-              <span className="block md:inline">
-                {" "}
-                <span className="font-extrabold text-slate-900">
-                  버려지기엔 아깝지 않나요?
+            {/* 가운데 정렬 텍스트 */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center px-4">
+              <div className="text-4xl mb-2">🥔</div>
+              <h2 className="text-2xl md:text-3xl font-bold leading-relaxed">
+                냉장고 속 잠자는 재료,
+                <span className="block md:inline">
+                  {" "}
+                  <span className="font-extrabold text-slate-900">
+                    버려지기엔 아깝지 않나요?
+                  </span>
                 </span>
-              </span>
-            </h2>
-            <p className="max-w-md text-sm md:text-base text-slate-600 mt-3 leading-relaxed">
-              언제 샀는지 기억도 안 나는 재료들.
-              <br />
-              <span className="font-semibold text-slate-900">
-                싹난감자는 남은 식재료를 한눈에 보여주고
-              </span>
-              , 사용 우선순위를 제안해
-              <br />
-              불필요한 음식 낭비를 줄여 줍니다.
-            </p>
+              </h2>
+              <p className="max-w-md text-base md:text-lg text-slate-600 mt-4 leading-relaxed">
+                언제 샀는지 기억도 안 나는 재료들.
+                <br />
+                <span className="font-semibold text-slate-900">
+                  남은 식재료를 한눈에 보여주고
+                </span>
+                , 우선순위를 함께 제안해
+                <br />
+                불필요한 음식 낭비를 줄여 줍니다.
+              </p>
+            </div>
+
+            {/* 하단 이미지 */}
+            <div
+              ref={imageRef}
+              className={`absolute inset-x-0 bottom-0 flex justify-center transition-all duration-700 ease-out ${
+                imageVisible
+                  ? "opacity-100 translate-y-[25px]"
+                  : "opacity-0 translate-y-[70px]"
+              }`}
+            >
+              <img
+                src={rottenFood}
+                alt="썩은 식재료"
+                className="w-full max-w-[900px] h-[32vh] md:h-[38vh] object-contain opacity-90 mt-6"
+              />
+            </div>
           </section>
 
-          {/* 슬라이드 2 */}
+          {/* 슬라이드 2 : 텍스트 왼쪽, 오른쪽에 영수증 이미지 */}
           <section
             id={SECTION_IDS[1]}
             ref={setSectionRef(1)}
@@ -193,50 +237,85 @@ export default function IntroOverlay({
               visibleSections[SECTION_IDS[1]] ? showCls : hiddenCls
             }`}
           >
-            <div className="text-3xl mb-1">📸</div>
-            <h2 className="text-xl md:text-2xl font-bold">
-              <span className="font-extrabold text-slate-900">
-                사진 한 장
-              </span>
-              으로 간편하게 재료 등록
-            </h2>
-            <p className="max-w-md text-sm md:text-base text-slate-600 mt-3 leading-relaxed">
-              영수증 사진만 찍어 주세요.
-              <br />
-              <span className="font-semibold text-slate-900">
-                하나씩 타이핑하지 않아도
-              </span>
-              , 필요한 정보만 똑똑하게 추출해
-              <br />
-              재료명, 수량, 유통기한을 자동으로 정리합니다.
-            </p>
+            <div className="w-full flex flex-col md:flex-row items-center justify-center gap-10 md:gap-16">
+              {/* 왼쪽 텍스트 */}
+              <div className="max-w-md text-center md:text-left">
+                <div className="text-4xl mb-3 md:mb-4">📸</div>
+                <h2 className="text-2xl md:text-3xl font-bold leading-relaxed">
+                  <span className="font-extrabold text-slate-900">
+                    사진 한 장
+                  </span>
+                  으로 간편하게 재료 등록
+                </h2>
+                <p className="mt-4 text-base md:text-lg text-slate-600 leading-relaxed">
+                  영수증 사진만 찍어 주세요.
+                  <br />
+                  <span className="font-semibold text-slate-900">
+                    하나씩 타이핑하지 않아도
+                  </span>
+                  , 필요한 정보만 똑똑하게 추출해
+                  <br />
+                  재료명, 수량, 유통기한을 자동으로 정리합니다.
+                </p>
+              </div>
+
+              {/* 오른쪽 이미지 */}
+              <div className="w-[200px] md:w-[260px] lg:w-[320px]">
+                <img
+                  src={receiptImage}
+                  alt="영수증 이미지"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
           </section>
 
           {/* 슬라이드 3 */}
           <section
             id={SECTION_IDS[2]}
             ref={setSectionRef(2)}
-            className={`${baseSectionCls} ${
+            className={`relative ${baseSectionCls} ${
               visibleSections[SECTION_IDS[2]] ? showCls : hiddenCls
             }`}
           >
-            <div className="text-3xl mb-1">🥗</div>
-            <h2 className="text-xl md:text-2xl font-bold">
-              가지고 있는 재료로{" "}
-              <span className="font-extrabold text-emerald-700">
-                오늘 바로 만들 수 있는 레시피
-              </span>
-            </h2>
-            <p className="max-w-md text-sm md:text-base text-slate-600 mt-3 leading-relaxed">
-              지금 냉장고에 있는 재료만으로 만들 수 있는 메뉴를 추천해요.
-              <br />
-              <span className="font-semibold text-slate-900">
-                남은 재료까지 알뜰하게 쓸 수 있도록
-              </span>
-              , 레시피 조합과 활용 방법을
-              <br />
-              함께 제안하여, 계획적인 소비를 도와드립니다.
-            </p>
+            {/* 오른쪽 위 음식 사진 */}
+            <div className="hidden md:block absolute top-10 right-10 lg:right-0 z-0">
+              <img
+                src={recipeTopRight}
+                alt="추천 레시피 이미지"
+                className="w-[230px] lg:w-[260px] xl:w-[400px] h-auto object-contain"
+              />
+            </div>
+
+            {/* 왼쪽 아래 음식 사진 */}
+            <div className="hidden md:block absolute bottom-10 left-10 lg:left-0 z-0">
+              <img
+                src={recipeBottomLeft}
+                alt="추천 레시피 이미지"
+                className="w-[260px] lg:w-[300px] xl:w-[550px] h-auto object-contain"
+              />
+            </div>
+
+            {/* 중앙 텍스트 컨텐츠 */}
+            <div className="relative z-10 flex flex-col items-center text-center px-4">
+              <div className="text-4xl mb-2">🥗</div>
+              <h2 className="text-2xl md:text-3xl font-bold">
+                가지고 있는 재료로{" "}
+                <span className="font-extrabold text-emerald-700">
+                  오늘 바로 만들 수 있는 레시피
+                </span>
+              </h2>
+              <p className="max-w-md text-base md:text-lg text-slate-600 mt-4 leading-relaxed">
+                지금 냉장고에 있는 재료만으로 만들 수 있는 메뉴를 추천해요.
+                <br />
+                <span className="font-semibold text-slate-900">
+                  남은 재료까지 알뜰하게 쓸 수 있도록
+                </span>
+                , 레시피와 활용 방법을
+                <br />
+                함께 제안하여, 계획적인 소비를 도와드립니다.
+              </p>
+            </div>
           </section>
         </div>
 
@@ -245,8 +324,7 @@ export default function IntroOverlay({
           ref={videoSectionRef}
           className="snap-start h-[calc(100vh-80px)] relative"
         >
-          {/* 위쪽과 자연스럽게 이어지는 그라데이션 */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 z-10 bg-gradient-to-b from-white via-white/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 z-10 bg-gradient-to-b from-white via-white/80 to-transparent" />
           <video
             className="w-full h-full object-cover"
             src={dashboardBannerVideo}
@@ -257,6 +335,16 @@ export default function IntroOverlay({
           />
         </section>
       </div>
+
+      {/* 아래로 스크롤 힌트 화살표 – 오버레이가 살아있는 동안 계속 표시 */}
+      {!closing && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+          <div className="flex flex-col items-center text-slate-400 text-[11px] md:text-xs opacity-80 animate-bounce">
+            <span className="mb-1">아래로 내려보세요</span>
+            <span className="text-lg md:text-xl">⌄</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,4 @@
-// src/pages/Dashboard.tsx
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getDashboardData } from "../api/dashboard";
 import type { DashboardData } from "../api/dashboard";
@@ -9,36 +8,60 @@ import IntroOverlay from "../components/IntroOverlay";
 
 export default function Dashboard() {
   const nav = useNavigate();
-  const { user, openLogin } = useAuth(); // openLogin 이름은 프로젝트에 맞게 사용 중인 걸로
+  const location = useLocation();
+  const { user } = useAuth();
 
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // const [showIntro, setShowIntro] = useState<boolean>(() => {
-  //   const seen = sessionStorage.getItem("sakkan_intro_seen");
-  //   return !seen;
-  // });
-  const [showIntro, setShowIntro] = useState<boolean>(true);
+  // 🔹 인트로 표시 여부: 첫 방문 + ?intro=1 이면 무조건 표시
+  const [showIntro, setShowIntro] = useState<boolean>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const forceIntro = params.get("intro") === "1";
 
-  const completeIntro = () => {
-    sessionStorage.setItem("sakkan_intro_seen", "true");
+    if (forceIntro) {
+      return true;
+    }
+
+    // 👉 기존 키 때문에 계속 안 뜰 수 있어서, 버전 하나 올려줌
+    const seen = sessionStorage.getItem("sakkan_intro_seen_v2");
+    return !seen; // 기록 없으면 true → 인트로 보여줌
+  });
+
+  // 🔹 로고에서 /?intro=1 로 다시 들어온 경우 감지해서 인트로 다시 켜기
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const forceIntro = params.get("intro") === "1";
+
+    if (forceIntro) {
+      setShowIntro(true);
+    }
+  }, [location.search]);
+
+  const finishIntroCommon = () => {
+    // 👉 새 키로 저장
+    sessionStorage.setItem("sakkan_intro_seen_v2", "true");
     setShowIntro(false);
-  };
 
-  const handleIntroFinishLoggedIn = () => {
-    completeIntro();
-    // 이미 /dashboard 이므로 추가 동작은 없음
-  };
-
-  const handleIntroFinishLoggedOut = () => {
-    completeIntro();
-    // 로그아웃 상태면 로그인 모달 오픈
-    if (openLogin) {
-      openLogin();
+    const params = new URLSearchParams(location.search);
+    if (params.get("intro") === "1") {
+      // 실제 대시보드 라우트가 "/" 라고 가정
+      nav("/", { replace: true });
     }
   };
 
+  const handleIntroFinishLoggedIn = () => {
+    finishIntroCommon();
+  };
+
+  const handleIntroFinishLoggedOut = () => {
+    finishIntroCommon();
+  };
+
+  // 대시보드 데이터 로드
   useEffect(() => {
     const loadDashboard = async () => {
       try {
@@ -77,43 +100,60 @@ export default function Dashboard() {
   const popularRecipes = dashboardData?.popularRecipes ?? [];
   const recommendedRecipes = dashboardData?.recommendedRecipes ?? [];
 
-  // 🔹 로딩 상태
+  // 로딩 상태
   if (loading) {
     return (
-      <div className="min-h-screen grid place-items-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-t-transparent border-[color:var(--color-primary)] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[color:var(--text-secondary)]">
-            데이터를 불러오는 중...
-          </p>
+      <>
+        {showIntro && (
+          <IntroOverlay
+            isLoggedIn={!!user}
+            onFinishLoggedIn={handleIntroFinishLoggedIn}
+            onFinishLoggedOut={handleIntroFinishLoggedOut}
+          />
+        )}
+        <div className="min-h-screen grid place-items-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-t-transparent border-[color:var(--color-primary)] rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-[color:var(--text-secondary)]">
+              데이터를 불러오는 중...
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  // 🔹 에러 상태
+  // 에러 상태
   if (error) {
     return (
-      <div className="min-h-screen grid place-items-center">
-        <div className="text-center max-w-md px-4">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold mb-2">
-            데이터를 불러올 수 없습니다
-          </h2>
-          <p className="text-[color:var(--text-secondary)] mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 rounded-lg bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90"
-          >
-            다시 시도
-          </button>
+      <>
+        {showIntro && (
+          <IntroOverlay
+            isLoggedIn={!!user}
+            onFinishLoggedIn={handleIntroFinishLoggedIn}
+            onFinishLoggedOut={handleIntroFinishLoggedOut}
+          />
+        )}
+        <div className="min-h-screen grid place-items-center">
+          <div className="text-center max-w-md px-4">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold mb-2">데이터를 불러올 수 없습니다</h2>
+            <p className="text-[color:var(--text-secondary)] mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-lg bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90"
+            >
+              다시 시도
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
+      {/* 🔹 인트로 오버레이 */}
       {showIntro && (
         <IntroOverlay
           isLoggedIn={!!user}
@@ -122,6 +162,7 @@ export default function Dashboard() {
         />
       )}
 
+      {/* 🔹 실제 대시보드 내용 */}
       <div>
         <main className="max-w-6xl mx-auto px-4 py-8">
           {/* 상단 배너 비디오 */}
@@ -164,7 +205,7 @@ export default function Dashboard() {
             </button>
           </section>
 
-          {/* 요약 카드들 */}
+          {/* 상단 카드 2개 */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div className="rounded-[20px] p-6 bg-[var(--bg-card)] border border-[color:var(--border-soft)] flex items-center gap-4 shadow-sm">
               <div

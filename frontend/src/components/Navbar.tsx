@@ -35,7 +35,7 @@ export default function Navbar() {
 
       <div className="max-w-6xl mx-auto h-16 px-4 flex items-center justify-between relative">
         <button
-          onClick={() => nav("/")}
+          onClick={() => nav("/?intro=1")}
           className="flex items-center gap-2 shrink-0"
           aria-label="홈으로 이동"
         >
@@ -43,15 +43,9 @@ export default function Navbar() {
         </button>
 
         <nav className="hidden md:flex items-center gap-2">
-          <NavLink to="/" className={navClass}>
-            대시보드
-          </NavLink>
-          <NavLink to="/fridge" className={navClass} state={{ from: pathname }}>
-            냉장고
-          </NavLink>
-          <NavLink to="/recipes" className={navClass}>
-            레시피
-          </NavLink>
+          <NavLink to="/" className={navClass}>대시보드</NavLink>
+          <NavLink to="/fridge" className={navClass}>냉장고</NavLink>
+          <NavLink to="/recipes" className={navClass}>레시피</NavLink>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -59,7 +53,7 @@ export default function Navbar() {
             <button
               ref={loginBtnRef}
               onClick={openLogin}
-              className="h-9 px-4 rounded-full bg-[#4CAF50] text-white text-sm hover:opacity-90 active:scale-[.99] transition"
+              className="h-9 px-4 rounded-full bg-[#4CAF50] text-white text-sm hover:opacity-90"
             >
               로그인
             </button>
@@ -67,10 +61,11 @@ export default function Navbar() {
             <>
               <button
                 onClick={() => nav("/mypage")}
-                className="hidden sm:block text-sm text-slate-600 hover:text-slate-900 hover:underline"
+                className="hidden sm:block text-sm text-slate-600 hover:underline"
               >
                 {user.name}
               </button>
+
               <button
                 onClick={logout}
                 className="h-9 px-3 rounded-full border border-slate-300 text-sm hover:bg-slate-50"
@@ -84,6 +79,7 @@ export default function Navbar() {
         {isLoginOpen && <LoginModal anchorRef={loginBtnRef} />}
       </div>
 
+      {/* 레시피 하위 메뉴 */}
       {inRecipes && (
         <div className="border-t border-gray-100 bg-white">
           <div className="max-w-6xl mx-auto h-12 px-4 flex items-center gap-2">
@@ -96,30 +92,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
-      <nav className="md:hidden border-t border-slate-200 bg-white">
-        <div className="max-w-6xl mx-auto px-2 py-2 flex items-center justify-between">
-          <NavLink to="/" className={navClass}>
-            대시보드
-          </NavLink>
-          <NavLink to="/fridge" className={navClass} state={{ from: pathname }}>
-            냉장고
-          </NavLink>
-          <NavLink to="/recipes" className={navClass}>
-            레시피
-          </NavLink>
-        </div>
-        {inRecipes && (
-          <div className="px-2 pb-2 flex gap-2">
-            <NavLink to="/recipes" end className={subNavClass}>
-              레시피 추천
-            </NavLink>
-            <NavLink to="/recipes/community" className={subNavClass}>
-              레시피 게시판
-            </NavLink>
-          </div>
-        )}
-      </nav>
     </header>
   );
 }
