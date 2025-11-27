@@ -4,12 +4,12 @@ import Dashboard from "./pages/Dashboard";
 import FridgeHome from "./pages/Fridge";
 import FridgeEdit from "./pages/FridgeEdit";
 import UploadReceipt from "./pages/UploadReceipt";
-import Recipes from "./pages/Recipes";
 import RecipeHome from "./pages/recipes/RecipeHome";
 import RecipeDetail from "./pages/recipes/RecipeDetail";
 import RecipeCommunity from "./pages/recipes/RecipeCommunity";
 import RecipeCreate from "./pages/recipes/RecipeCreate";
 import AiRecipeCreate from "./pages/recipes/AiRecipeCreate";
+import MyPage from "./pages/MyPage";
 
 export default function App() {
   return (
@@ -22,8 +22,8 @@ export default function App() {
           <Route path="/upload" element={<UploadReceipt />} />
           <Route path="/fridge" element={<FridgeHome />} />
           <Route path="/fridge/edit/:id" element={<FridgeEdit />} />
-          <Route path="/recipes-simple" element={<Recipes />} />
           <Route path="/recipes" element={<RecipeHome />} />
+          <Route path="/mypage" element={<MyPage />} />
           {/* 정적 라우트를 동적 라우트보다 먼저 선언 */}
           <Route path="/recipes/community" element={<RecipeCommunity />} />
           <Route path="/recipes/create" element={<RecipeCreate />} />

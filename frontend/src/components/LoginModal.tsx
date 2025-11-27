@@ -167,7 +167,7 @@ export default function LoginModal({ anchorRef }: LoginModalProps) {
 
         <div className="mx-auto mb-3 size-14 rounded-full bg-green-100 grid place-items-center"></div>
         <h3 className="text-lg font-semibold text-center">싹난감자</h3>
-        {/* ✅ 서브 카피 추가 */}
+ 
         <p className="text-sm text-slate-500 text-center mt-1">
           당신의 냉장고를 위한 똑똑한 파트너
         </p>
