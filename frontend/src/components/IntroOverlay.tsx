@@ -19,7 +19,6 @@ export default function IntroOverlay({
   onFinishLoggedIn,
   onFinishLoggedOut,
 }: IntroOverlayProps) {
-  const [closing, setClosing] = useState(false);
   const [visibleSections, setVisibleSections] =
     useState<Record<string, boolean>>({});
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -80,9 +79,8 @@ export default function IntroOverlay({
     return () => observer.disconnect();
   }, []);
 
-  // 마지막 영상 섹션 보이면 3초 뒤 자동 전환
+  // 마지막 영상 섹션 보이면 3초 뒤 자동 전환 (페이드 X, 그냥 콜백만)
   const visibleTimerRef = useRef<number | null>(null);
-  const finishTimerRef = useRef<number | null>(null);
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -95,19 +93,13 @@ export default function IntroOverlay({
           if (entry.isIntersecting && !startedRef.current) {
             startedRef.current = true;
 
-            // 3초간 영상 보여주고
+            // 3초간 영상 보여주고 나서 콜백 호출
             visibleTimerRef.current = window.setTimeout(() => {
-              // 페이드 아웃 시작
-              setClosing(true);
-
-              // 살짝 딜레이 후 실제 Intro 종료
-              finishTimerRef.current = window.setTimeout(() => {
-                if (isLoggedIn) {
-                  onFinishLoggedIn();
-                } else {
-                  onFinishLoggedOut();
-                }
-              }, 600);
+              if (isLoggedIn) {
+                onFinishLoggedIn();
+              } else {
+                onFinishLoggedOut();
+              }
             }, 3000);
           }
         });
@@ -120,7 +112,6 @@ export default function IntroOverlay({
     return () => {
       observer.disconnect();
       if (visibleTimerRef.current) window.clearTimeout(visibleTimerRef.current);
-      if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
     };
   }, [isLoggedIn, onFinishLoggedIn, onFinishLoggedOut]);
 
@@ -130,11 +121,8 @@ export default function IntroOverlay({
   const showCls = "opacity-100 translate-y-0";
 
   return (
-    <div
-      className={`fixed inset-0 z-[9999] bg-white flex flex-col transition-opacity duration-700 ${
-        closing ? "opacity-0 pointer-events-none" : "opacity-100"
-      }`}
-    >
+    // 🔸 페이드 아웃 관련 class 전부 제거
+    <div className="fixed inset-0 z-[9999] bg-white flex flex-col">
       <Navbar />
 
       {/* 스크롤 영역 */}
@@ -180,7 +168,7 @@ export default function IntroOverlay({
             </p>
           </section>
 
-          {/* 슬라이드 1 : 텍스트 센터 + 하단 rotten_food 이미지 페이드 인 */}
+          {/* 슬라이드 1 */}
           <section
             id={SECTION_IDS[0]}
             ref={setSectionRef(0)}
@@ -188,7 +176,6 @@ export default function IntroOverlay({
               visibleSections[SECTION_IDS[0]] ? showCls : hiddenCls
             }`}
           >
-            {/* 가운데 정렬 텍스트 */}
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center px-4">
               <div className="text-4xl mb-2">🥔</div>
               <h2 className="text-2xl md:text-3xl font-bold leading-relaxed">
@@ -212,7 +199,6 @@ export default function IntroOverlay({
               </p>
             </div>
 
-            {/* 하단 이미지 */}
             <div
               ref={imageRef}
               className={`absolute inset-x-0 bottom-0 flex justify-center transition-all duration-700 ease-out ${
@@ -229,7 +215,7 @@ export default function IntroOverlay({
             </div>
           </section>
 
-          {/* 슬라이드 2 : 텍스트 왼쪽, 오른쪽에 영수증 이미지 */}
+          {/* 슬라이드 2 */}
           <section
             id={SECTION_IDS[1]}
             ref={setSectionRef(1)}
@@ -238,7 +224,6 @@ export default function IntroOverlay({
             }`}
           >
             <div className="w-full flex flex-col md:flex-row items-center justify-center gap-10 md:gap-16">
-              {/* 왼쪽 텍스트 */}
               <div className="max-w-md text-center md:text-left">
                 <div className="text-4xl mb-3 md:mb-4">📸</div>
                 <h2 className="text-2xl md:text-3xl font-bold leading-relaxed">
@@ -259,7 +244,6 @@ export default function IntroOverlay({
                 </p>
               </div>
 
-              {/* 오른쪽 이미지 */}
               <div className="w-[200px] md:w-[260px] lg:w-[320px]">
                 <img
                   src={receiptImage}
@@ -278,7 +262,6 @@ export default function IntroOverlay({
               visibleSections[SECTION_IDS[2]] ? showCls : hiddenCls
             }`}
           >
-            {/* 오른쪽 위 음식 사진 */}
             <div className="hidden md:block absolute top-10 right-10 lg:right-0 z-0">
               <img
                 src={recipeTopRight}
@@ -287,7 +270,6 @@ export default function IntroOverlay({
               />
             </div>
 
-            {/* 왼쪽 아래 음식 사진 */}
             <div className="hidden md:block absolute bottom-10 left-10 lg:left-0 z-0">
               <img
                 src={recipeBottomLeft}
@@ -296,7 +278,6 @@ export default function IntroOverlay({
               />
             </div>
 
-            {/* 중앙 텍스트 컨텐츠 */}
             <div className="relative z-10 flex flex-col items-center text-center px-4">
               <div className="text-4xl mb-2">🥗</div>
               <h2 className="text-2xl md:text-3xl font-bold">
@@ -319,12 +300,13 @@ export default function IntroOverlay({
           </section>
         </div>
 
-        {/* 마지막 슬라이드: 네비바 제외 전체 화면 비디오 + 상단 그라데이션 */}
+        {/* 🔸 FLIP 시작점: 전체 화면 비디오 */}
         <section
           ref={videoSectionRef}
+          id="intro-transition-video"
           className="snap-start h-[calc(100vh-80px)] relative"
         >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 z-10 bg-gradient-to-b from-white via-white/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 z-10  from-white via-white/80 to-transparent" />
           <video
             className="w-full h-full object-cover"
             src={dashboardBannerVideo}
@@ -336,15 +318,13 @@ export default function IntroOverlay({
         </section>
       </div>
 
-      {/* 아래로 스크롤 힌트 화살표 – 오버레이가 살아있는 동안 계속 표시 */}
-      {!closing && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
-          <div className="flex flex-col items-center text-slate-400 text-[11px] md:text-xs opacity-80 animate-bounce">
-            <span className="mb-1">아래로 내려보세요</span>
-            <span className="text-lg md:text-xl">⌄</span>
-          </div>
+      {/* 아래로 스크롤 힌트 화살표 – 인트로가 살아있는 동안 계속 표시 */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+        <div className="flex flex-col items-center text-slate-400 text-[11px] md:text-xs opacity-80 animate-bounce">
+          <span className="mb-1">아래로 내려보세요</span>
+          <span className="text-lg md:text-xl">⌄</span>
         </div>
-      )}
+      </div>
     </div>
   );
 }

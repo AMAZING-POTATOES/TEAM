@@ -33,3 +33,20 @@ body {
 }
 
 .input { @apply h-10 px-3 rounded-md border border-[color:var(--border-soft)] bg-white w-full; }
+
+@keyframes popular-carousel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-popular-carousel {
+  animation: popular-carousel 28s linear infinite;
+}
+
+.animate-popular-carousel:hover {
+  animation-play-state: paused;
+}

@@ -43,6 +43,51 @@ export default function Dashboard() {
   }, [location.search]);
 
   const finishIntroCommon = () => {
+    try {
+      const startEl = document.getElementById("intro-transition-video");
+      const endEl = document.getElementById("dashboard-banner-video");
+
+      if (startEl && endEl) {
+        const startRect = startEl.getBoundingClientRect();
+        const endRect = endEl.getBoundingClientRect();
+
+        // 실제 배너는 잠깐 숨김
+        (endEl as HTMLElement).style.opacity = "0";
+
+        const clone = startEl.cloneNode(true) as HTMLElement;
+        clone.style.position = "fixed";
+        clone.style.left = `${startRect.left}px`;
+        clone.style.top = `${startRect.top}px`;
+        clone.style.width = `${startRect.width}px`;
+        clone.style.height = `${startRect.height}px`;
+        clone.style.zIndex = "99999";
+        clone.style.borderRadius = "0px";
+        clone.style.overflow = "hidden";
+        // ✨ 4초 동안 부드럽게 줄어드는 트랜지션
+        clone.style.transition =
+          "all 2.7s cubic-bezier(0.22, 0.61, 0.36, 1), border-radius 4s cubic-bezier(0.22, 0.61, 0.36, 1)";
+        document.body.appendChild(clone);
+
+        // 다음 프레임에서 목표 위치/크기로 이동
+        requestAnimationFrame(() => {
+          clone.style.left = `${endRect.left}px`;
+          clone.style.top = `${endRect.top}px`;
+          clone.style.width = `${endRect.width}px`;
+          clone.style.height = `${endRect.height}px`;
+          clone.style.borderRadius = "20px";
+        });
+
+        // 애니 끝날 때 원래 배너 보이게 + 클론 제거
+        clone.addEventListener("transitionend", () => {
+          clone.remove();
+          (endEl as HTMLElement).style.opacity = "1";
+        });
+      }
+    } catch (e) {
+      console.error("Intro → Dashboard FLIP transition error:", e);
+    }
+
+    // 인트로 본 기록 + 오버레이 제거
     sessionStorage.setItem("sakkan_intro_seen_v2", "true");
     setShowIntro(false);
 
@@ -50,7 +95,8 @@ export default function Dashboard() {
     if (params.get("intro") === "1") {
       nav("/", { replace: true });
     }
-  };
+};
+
 
   const handleIntroFinishLoggedIn = () => {
     finishIntroCommon();
@@ -166,9 +212,9 @@ export default function Dashboard() {
 
       {/* 🔹 실제 대시보드 내용 */}
       <div>
-        <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+        <main className="max-w-6xl mx-auto px-4 pt-0 pb-6 space-y-6">
           {/* ✅ 오늘 요약 바 */}
-          <section>
+          <section className="mt-3">
             <div className="rounded-2xl px-4 py-3 flex flex-wrap gap-3 items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100/70 border border-blue-100">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-white shadow flex items-center justify-center">
@@ -209,7 +255,10 @@ export default function Dashboard() {
           </section>
 
           {/* 상단 배너 비디오 */}
-          <section className="rounded-[20px] overflow-hidden bg-black">
+          <section
+            id="dashboard-banner-video"
+            className="rounded-[20px] overflow-hidden mb-6 bg-black relative"
+          >
             <video
               className="w-full h-auto max-h-[280px] object-cover"
               autoPlay
@@ -218,7 +267,6 @@ export default function Dashboard() {
               playsInline
             >
               <source src={dashboardBannerVideo} type="video/mp4" />
-              브라우저가 video 태그를 지원하지 않습니다.
             </video>
           </section>
 
@@ -319,132 +367,81 @@ export default function Dashboard() {
               </div>
             </div>
           </section>
-
-          {/* 추천 레시피 섹션 */}
-          {recommendedRecipes.length > 0 && (
-            <section className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em]">
-                  이 재료로 만들 수 있어요! 추천 레시피
-                </h2>
-                <div className="flex items-center gap-2 text-xs md:text-sm">
-                  <button className="hidden md:inline-flex px-3 py-1 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
-                    난이도 낮은 순
-                  </button>
-                  <button
-                    onClick={() => nav("/recipes")}
-                    className="text-emerald-700 hover:underline"
-                    type="button"
-                  >
-                    전체 보기
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recommendedRecipes.slice(0, 4).map((recipe) => (
-                  <div
-                    key={recipe.recipeId}
-                    onClick={() => nav(`/recipes/${recipe.recipeId}`)}
-                    className="rounded-[20px] overflow-hidden bg-[var(--bg-card)] border border-[color:var(--border-soft)] cursor-pointer
-                               hover:shadow-lg hover:-translate-y-1 transition-transform transition-shadow duration-200"
-                  >
-                    <div className="aspect-video bg-slate-100 grid place-items-center text-slate-400 overflow-hidden">
-                      {recipe.mainImageUrl ? (
-                        <img
-                          src={recipe.mainImageUrl}
-                          alt={recipe.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span>🍳</span>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="text-[16px] font-bold truncate">
-                          {recipe.title}
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          {recipe.difficulty}
-                        </span>
-                      </div>
-                      <div className="text-[13px] text-[color:var(--text-secondary)] line-clamp-2">
-                        {recipe.description ||
-                          `${recipe.cookingTime}분 · ${recipe.difficulty}`}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2 text-[12px] text-[color:var(--text-secondary)]">
-                        <span>👍 {recipe.likeCount}</span>
-                        <span>⭐ {recipe.averageRating.toFixed(1)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* 인기 레시피 섹션 */}
-          <section className="mt-8">
-            <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
-              지금 인기있는 레시피
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {popularRecipes.length > 0 ? (
-                popularRecipes.slice(0, 4).map((recipe) => (
-                  <div
-                    key={recipe.recipeId}
-                    onClick={() => nav(`/recipes/${recipe.recipeId}`)}
-                    className="rounded-[20px] overflow-hidden bg-[var(--bg-card)] border border-[color:var(--border-soft)] cursor-pointer
-                               hover:shadow-lg hover:-translate-y-1 transition-transform transition-shadow duration-200"
-                  >
-                    <div className="aspect-video bg-slate-100 grid place-items-center text-slate-400 overflow-hidden">
-                      {recipe.mainImageUrl ? (
-                        <img
-                          src={recipe.mainImageUrl}
-                          alt={recipe.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span>🍳</span>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="text-[16px] font-bold truncate">
-                        {recipe.title}
-                      </div>
-                      <div className="text-[13px] text-[color:var(--text-secondary)] line-clamp-2">
-                        {recipe.description ||
-                          `${recipe.cookingTime}분 · ${recipe.difficulty}`}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2 text-[12px] text-[color:var(--text-secondary)]">
-                        <span>👍 {recipe.likeCount}</span>
-                        <span>⭐ {recipe.averageRating.toFixed(1)}</span>
-                        <span>👁️ {recipe.viewCount}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 text-[color:var(--text-secondary)]">
-                  <div className="text-4xl mb-2">🍳</div>
-                  <p className="text-lg font-semibold mb-1">
-                    아직 등록된 레시피가 없습니다.
-                  </p>
-                  <p className="text-sm mb-4">
-                    오늘 만든 요리를 레시피로 남기고, 인기 레시피로 키워보세요.
-                  </p>
-                  <button
-                    onClick={() => nav("/recipes")}
-                    className="mt-1 px-4 py-2 rounded-lg bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90"
-                    type="button"
-                  >
-                    레시피 둘러보기
-                  </button>
-                </div>
-              )}
+        
+          {/* 🔥 인기 레시피 섹션 – 화면 전체 폭 + 카드만 보이게 */}
+          <section
+            className="
+              mt-10
+              w-screen
+              relative left-1/2 right-1/2
+              ml-[-50vw] mr-[-50vw]
+              overflow-hidden
+            "
+          >
+            {/* 제목은 기존 레이아웃에 맞게 가운데 정렬 */}
+            <div className="max-w-6xl mx-auto px-4">
+              <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
+                지금 인기있는 레시피
+              </h2>
             </div>
+
+            {popularRecipes.length > 0 ? (
+              <div className="relative w-full overflow-hidden py-4">
+                <div className="flex gap-6 min-w-max animate-popular-carousel">
+                  {[...popularRecipes, ...popularRecipes, ...popularRecipes, ...popularRecipes].map((recipe, idx) => (
+                    <div
+                      key={`${recipe.recipeId}-${idx}`}
+                      onClick={() => nav(`/recipes/${recipe.recipeId}`)}
+                      className="
+                        cursor-pointer
+                        rounded-[20px]
+                        overflow-hidden
+                        bg-white
+                        shadow
+                        border border-gray-200
+                        flex-shrink-0
+                        w-[240px] md:w-[270px] lg:w-[300px]
+                        hover:shadow-md
+                        transition-transform
+                        hover:-translate-y-1
+                      "
+                    >
+                      <div className="aspect-video bg-slate-100 overflow-hidden grid place-items-center">
+                        {recipe.mainImageUrl ? (
+                          <img
+                            src={recipe.mainImageUrl}
+                            alt={recipe.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-3xl text-slate-400">🍳</span>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-[16px] line-clamp-2">
+                          {recipe.title}
+                        </h3>
+                        <p className="text-[13px] text-slate-500 line-clamp-2 mt-1">
+                          {recipe.description ||
+                            `${recipe.cookingTime}분 · ${recipe.difficulty}`}
+                        </p>
+                        <div className="flex items-center gap-3 text-[12px] text-slate-500 mt-2">
+                          <span>👍 {recipe.likeCount}</span>
+                          <span>⭐ {recipe.averageRating.toFixed(1)}</span>
+                          <span>👁️ {recipe.viewCount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-slate-500">
+                아직 등록된 레시피가 없습니다.
+              </div>
+            )}
           </section>
+          
         </main>
       </div>
     </>
