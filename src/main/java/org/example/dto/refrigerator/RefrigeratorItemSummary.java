@@ -10,22 +10,28 @@ public class RefrigeratorItemSummary {
     private Long itemId;
     private String ingredientName;
     private String quantity;
+    private LocalDate purchaseDate;
     private LocalDate expirationDate;
     private StorageMethod storageMethod;
     private ItemStatus status;
+    private String category;
+    private String memo;
 
     public RefrigeratorItemSummary() {
     }
 
-    public RefrigeratorItemSummary(Long itemId, String ingredientName, String quantity,
+    public RefrigeratorItemSummary(Long itemId, String ingredientName, String quantity, LocalDate purchaseDate,
                                    LocalDate expirationDate, StorageMethod storageMethod,
-                                   ItemStatus status) {
+                                   ItemStatus status, String category, String memo) {
         this.itemId = itemId;
         this.ingredientName = ingredientName;
         this.quantity = quantity;
+        this.purchaseDate = purchaseDate;
         this.expirationDate = expirationDate;
         this.storageMethod = storageMethod;
         this.status = status;
+        this.category = category;
+        this.memo = memo;
     }
 
     public Long getItemId() {
@@ -52,6 +58,10 @@ public class RefrigeratorItemSummary {
         this.quantity = quantity;
     }
 
+    public LocalDate getPurchaseDate() {return purchaseDate; }
+
+    public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }
+
     public LocalDate getExpirationDate() {
         return expirationDate;
     }
@@ -74,6 +84,22 @@ public class RefrigeratorItemSummary {
 
     public void setStatus(ItemStatus status) {
         this.status = status;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getMemo() {
+        return memo;
+    }
+
+    public void setMemo(String memo) {
+        this.memo = memo;
     }
 }
 

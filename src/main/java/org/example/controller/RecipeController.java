@@ -25,13 +25,22 @@ public class RecipeController {
     private final RecipeService recipeService;
     private final RecipeInteractionService recipeInteractionService;
     private final RecipeRecommendationService recipeRecommendationService;
+    private final org.example.service.RecipeCrawlerService recipeCrawlerService;
+    private final org.example.service.GeminiRecipeGeneratorService geminiRecipeGeneratorService;
+    private final org.example.service.UnifiedRecipeRecommendationService unifiedRecipeRecommendationService;
 
     public RecipeController(RecipeService recipeService,
                             RecipeInteractionService recipeInteractionService,
-                            RecipeRecommendationService recipeRecommendationService) {
+                            RecipeRecommendationService recipeRecommendationService,
+                            org.example.service.RecipeCrawlerService recipeCrawlerService,
+                            org.example.service.GeminiRecipeGeneratorService geminiRecipeGeneratorService,
+                            org.example.service.UnifiedRecipeRecommendationService unifiedRecipeRecommendationService) {
         this.recipeService = recipeService;
         this.recipeInteractionService = recipeInteractionService;
         this.recipeRecommendationService = recipeRecommendationService;
+        this.recipeCrawlerService = recipeCrawlerService;
+        this.geminiRecipeGeneratorService = geminiRecipeGeneratorService;
+        this.unifiedRecipeRecommendationService = unifiedRecipeRecommendationService;
     }
 
     @GetMapping
@@ -179,6 +188,82 @@ public class RecipeController {
                 .map(RecipeSummaryResponse::from)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 크롤링 기반 레시피 추천 (만개의레시피)
+     * @param selectedIngredients 사용자가 선택한 재료 목록
+     * @return 크롤링된 레시피 목록
+     */
+    @PostMapping("/recommend/crawl")
+    public ResponseEntity<List<RecipeCrawlDTO>> recommendRecipesByCrawling(
+            @RequestBody List<String> selectedIngredients) {
+
+        if (selectedIngredients == null || selectedIngredients.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        // 재료를 검색 키워드로 변환
+        String searchKeyword = String.join(" ", selectedIngredients);
+
+        // 크롤링 수행
+        List<RecipeCrawlDTO> crawledRecipes = recipeCrawlerService.crawlRecipeDetails(searchKeyword);
+
+        return ResponseEntity.ok(crawledRecipes);
+    }
+
+    /**
+     * AI 기반 레시피 생성 (Gemini API)
+     * @param request Gemini API 요청 데이터
+     * @return AI가 생성한 레시피
+     */
+    @PostMapping("/generate/ai")
+    public ResponseEntity<org.example.dto.recipe.GeminiRecipeResponse> generateRecipeWithAI(
+            @RequestBody org.example.dto.recipe.GeminiRecipeRequest request) {
+                System.out.println("AI Recipe Generation Called");
+
+        org.example.dto.recipe.GeminiRecipeResponse response = geminiRecipeGeneratorService.generateRecipe(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 통합 레시피 추천 (로컬 DB + 크롤링) - GET 버전 (기본 설정 사용)
+     * 사용자의 냉장고 재료를 기반으로 기본 설정으로 추천
+     * @param currentUser 현재 인증된 사용자
+     * @return 로컬 DB와 크롤링 결과를 병합한 통합 레시피 목록
+     */
+    @GetMapping("/recommendations/unified")
+    public ResponseEntity<List<UnifiedRecipeResponse>> getUnifiedRecommendationsByRefrigerator(
+            @AuthenticationPrincipal JwtUserDetails currentUser) {
+
+        // 기본 설정 사용
+        UnifiedRecipeRecommendationRequest defaultConfig = new UnifiedRecipeRecommendationRequest();
+        // ingredients는 서비스에서 냉장고에서 가져오므로 빈 리스트로 설정
+        defaultConfig.setIngredients(new java.util.ArrayList<>());
+
+        List<UnifiedRecipeResponse> results = unifiedRecipeRecommendationService
+                .recommendRecipesByUserId(currentUser.getUserId(), defaultConfig);
+
+        return ResponseEntity.ok(results);
+    }
+
+    /**
+     * 통합 레시피 추천 (로컬 DB + 크롤링) - POST 버전 (커스텀 설정)
+     * 사용자가 직접 재료 목록과 설정을 지정하여 추천
+     * @param currentUser 현재 인증된 사용자
+     * @param request 통합 추천 설정 요청
+     * @return 로컬 DB와 크롤링 결과를 병합한 통합 레시피 목록
+     */
+    @PostMapping("/recommendations/unified")
+    public ResponseEntity<List<UnifiedRecipeResponse>> getUnifiedRecommendationsWithConfig(
+            @AuthenticationPrincipal JwtUserDetails currentUser,
+            @Valid @RequestBody UnifiedRecipeRecommendationRequest request) {
+
+        List<UnifiedRecipeResponse> results = unifiedRecipeRecommendationService
+                .recommendRecipesByIngredients(request.getIngredients(), request);
+
+        return ResponseEntity.ok(results);
     }
 }
 

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class RecipeRecommendationService {
@@ -25,6 +26,11 @@ public class RecipeRecommendationService {
 
     @Transactional(readOnly = true)
     public List<Recipe> recommendRecipesByIngredients(Long userId) {
+        return recommendRecipesByIngredients(userId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Recipe> recommendRecipesByIngredients(Long userId, Integer maxResults) {
         List<String> userIngredients = refrigeratorItemRepository
                 .findByUserUserIdOrderByExpirationDateAsc(userId)
                 .stream()
@@ -35,14 +41,24 @@ public class RecipeRecommendationService {
             return List.of();
         }
 
-        return recipeRepository.findAll().stream()
+        Stream<Recipe> stream = recipeRepository.findAll().stream()
                 .filter(recipe -> matchesIngredients(recipe, userIngredients))
-                .sorted(recommendationComparator())
-                .collect(Collectors.toList());
+                .sorted(recommendationComparator());
+
+        if (maxResults != null && maxResults > 0) {
+            stream = stream.limit(maxResults);
+        }
+
+        return stream.collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<Recipe> recommendRecipesByIngredientList(List<String> ingredients) {
+        return recommendRecipesByIngredientList(ingredients, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Recipe> recommendRecipesByIngredientList(List<String> ingredients, Integer maxResults) {
         if (ingredients == null || ingredients.isEmpty()) {
             return List.of();
         }
@@ -50,10 +66,15 @@ public class RecipeRecommendationService {
                 .map(String::toLowerCase)
                 .collect(Collectors.toList());
 
-        return recipeRepository.findAll().stream()
+        Stream<Recipe> stream = recipeRepository.findAll().stream()
                 .filter(recipe -> matchesIngredients(recipe, normalized))
-                .sorted(recommendationComparator())
-                .collect(Collectors.toList());
+                .sorted(recommendationComparator());
+
+        if (maxResults != null && maxResults > 0) {
+            stream = stream.limit(maxResults);
+        }
+
+        return stream.collect(Collectors.toList());
     }
 
     private boolean matchesIngredients(Recipe recipe, List<String> userIngredients) {
@@ -70,8 +91,9 @@ public class RecipeRecommendationService {
                 .filter(userIngredients::contains)
                 .count();
 
-        double matchRate = (double) matchCount / required.size();
-        return matchRate >= 0.7;
+        // 최소 1개 이상의 재료가 매칭되면 통과
+        // 실제 필터링은 UnifiedRecipeRecommendationService에서 minMatchRate로 처리됨
+        return matchCount > 0;
     }
 
     private Comparator<Recipe> recommendationComparator() {

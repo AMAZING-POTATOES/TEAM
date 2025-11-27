@@ -1,7 +1,9 @@
 package org.example.service;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -13,6 +15,9 @@ import java.util.regex.Pattern;
 
 @Service
 public class ReceiptOcrService {
+
+    @Value("${google.cloud.vision.key-path:}")
+    private String visionKeyPath;
 
     /**
      * Google Vision API를 사용해 영수증에서 텍스트를 추출 (하이브리드 방식)
@@ -30,7 +35,7 @@ public class ReceiptOcrService {
                 .build();
         requests.add(request);
 
-        try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
+        try (ImageAnnotatorClient client = createVisionClient()) {
             BatchAnnotateImagesResponse batchResponse = client.batchAnnotateImages(requests);
             AnnotateImageResponse response = batchResponse.getResponses(0);
 
@@ -110,6 +115,23 @@ public class ReceiptOcrService {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Vision API 클라이언트 생성 (서비스 계정 키 파일 사용)
+     */
+    private ImageAnnotatorClient createVisionClient() throws IOException {
+        if (visionKeyPath != null && !visionKeyPath.trim().isEmpty()) {
+            // 서비스 계정 키 파일이 설정된 경우
+            GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(visionKeyPath));
+            ImageAnnotatorSettings settings = ImageAnnotatorSettings.newBuilder()
+                    .setCredentialsProvider(() -> credentials)
+                    .build();
+            return ImageAnnotatorClient.create(settings);
+        } else {
+            // 기본 Application Default Credentials 사용
+            return ImageAnnotatorClient.create();
+        }
     }
 
     /**

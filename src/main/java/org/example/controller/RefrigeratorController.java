@@ -35,9 +35,12 @@ public class RefrigeratorController {
                         item.getItemId(),
                         item.getIngredientName(),
                         item.getQuantity(),
+                        item.getPurchaseDate(),
                         item.getExpirationDate(),
                         item.getStorageMethod(),
-                        item.getStatus()
+                        item.getStatus(),
+                        item.getCategory(),
+                        item.getMemo()
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(result);
@@ -110,9 +113,12 @@ public class RefrigeratorController {
                         item.getItemId(),
                         item.getIngredientName(),
                         item.getQuantity(),
+                        item.getPurchaseDate(),
                         item.getExpirationDate(),
                         item.getStorageMethod(),
-                        item.getStatus()
+                        item.getStatus(),
+                        item.getCategory(),
+                        item.getMemo()
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(result);

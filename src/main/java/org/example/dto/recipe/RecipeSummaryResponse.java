@@ -11,6 +11,8 @@ public class RecipeSummaryResponse {
     private Long recipeId;
     private Long userId;
     private String title;
+    private String description;
+    private String mainImageUrl;
     private String category;
     private Difficulty difficulty;
     private Integer cookingTime;
@@ -28,6 +30,8 @@ public class RecipeSummaryResponse {
         response.setRecipeId(recipe.getRecipeId());
         response.setUserId(recipe.getUser().getUserId());
         response.setTitle(recipe.getTitle());
+        response.setDescription(recipe.getDescription());
+        response.setMainImageUrl(recipe.getMainImageUrl());
         response.setCategory(recipe.getCategory());
         response.setDifficulty(recipe.getDifficulty());
         response.setCookingTime(recipe.getCookingTime());
@@ -65,6 +69,22 @@ public class RecipeSummaryResponse {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getMainImageUrl() {
+        return mainImageUrl;
+    }
+
+    public void setMainImageUrl(String mainImageUrl) {
+        this.mainImageUrl = mainImageUrl;
     }
 
     public String getCategory() {
