@@ -35,7 +35,7 @@ export default function Navbar() {
 
       <div className="max-w-6xl mx-auto h-16 px-4 flex items-center justify-between relative">
         <button
-          onClick={() => nav("/?intro=1")}
+          onClick={() => nav("/dashboard?intro=1")}
           className="flex items-center gap-2 shrink-0"
           aria-label="홈으로 이동"
         >
