@@ -10,7 +10,6 @@ import RecipeDetail from "./pages/recipes/RecipeDetail";
 import RecipeCommunity from "./pages/recipes/RecipeCommunity";
 import RecipeCreate from "./pages/recipes/RecipeCreate";
 import AiRecipeCreate from "./pages/recipes/AiRecipeCreate";
-import AiRecipeDetail from "./pages/recipes/AiRecipeDetail";
 
 export default function App() {
   return (
@@ -29,7 +28,7 @@ export default function App() {
           <Route path="/recipes/community" element={<RecipeCommunity />} />
           <Route path="/recipes/create" element={<RecipeCreate />} />
           <Route path="/recipes/ai" element={<AiRecipeCreate />} />
-          <Route path="/recipes/ai/:id" element={<AiRecipeDetail />} />
+          {/* AI 레시피도 RecipeDetail에서 처리 */}
           <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="*" element={<div className="p-10">Not Found</div>} />
         </Routes>

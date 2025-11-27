@@ -95,8 +95,8 @@ export default function RecipeDetail() {
 
         if (mounted) {
           setData(recipe);
-          setLikeCount(recipe.likeCount);
-          setSaveCount(recipe.saveCount);
+          setLikeCount(recipe.likeCount ?? 0);
+          setSaveCount(recipe.saveCount ?? 0);
           console.log("✅ RecipeDetail: 레시피 수신 성공:", recipe.title);
 
           // 로그인한 경우 상호작용 상태 조회
@@ -417,9 +417,9 @@ export default function RecipeDetail() {
         <div className="mt-2 flex flex-wrap items-center gap-3 text-gray-500">
           {data.authorName && <span>작성자 {data.authorName}</span>}
           {data.authorName && <span>•</span>}
-          <span>⏱ {data.cookingTime}분</span>
+          <span>⏱ {data.cookingTime ?? 0}분</span>
           <span>•</span>
-          <span>{difficultyMap[data.difficulty] || data.difficulty}</span>
+          <span>{data.difficulty ? (difficultyMap[data.difficulty] || data.difficulty) : '-'}</span>
           {data.servings && (
             <>
               <span>•</span>
@@ -482,18 +482,69 @@ export default function RecipeDetail() {
 
       <section ref={ingredientsRef} data-observe-id="ingredients" className="mt-6">
         <h3 className="mb-3 font-semibold">필요한 재료</h3>
-        <div className="rounded-2xl bg-[#4CAF50]/10 p-5 ring-1 ring-[#4CAF50]/20">
-          <ul className="divide-y divide-[#4CAF50]/15">
-            {data.ingredients.map((i, idx) => (
-              <li key={idx} className="flex items-center justify-between py-3">
-                <span className="font-medium text-[#2e7d32]">
-                  {i.ingredientName}
-                </span>
-                <span className="text-[#2e7d32]">{i.quantity || "적당량"}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+
+        {/* 냉장고에 있는 재료와 추가 재료를 구분하여 표시 */}
+        {data.ingredients.some(i => i.isAvailable !== undefined) ? (
+          <div className="space-y-4">
+            {/* 냉장고에 있는 재료 */}
+            {data.ingredients.filter(i => i.isAvailable === true).length > 0 && (
+              <div className="rounded-2xl bg-[#4CAF50]/10 p-5 ring-1 ring-[#4CAF50]/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-semibold text-[#2e7d32]">냉장고에 있는 재료</span>
+                  <span className="rounded-full bg-[#4CAF50] px-2 py-0.5 text-xs text-white">
+                    {data.ingredients.filter(i => i.isAvailable === true).length}개
+                  </span>
+                </div>
+                <ul className="divide-y divide-[#4CAF50]/15">
+                  {data.ingredients.filter(i => i.isAvailable === true).map((i, idx) => (
+                    <li key={idx} className="flex items-center justify-between py-3">
+                      <span className="font-medium text-[#2e7d32]">
+                        ✓ {i.ingredientName}
+                      </span>
+                      <span className="text-[#2e7d32]">{i.quantity || "적당량"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 추가로 필요한 재료 */}
+            {data.ingredients.filter(i => i.isAvailable === false).length > 0 && (
+              <div className="rounded-2xl bg-orange-50 p-5 ring-1 ring-orange-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-semibold text-orange-700">추가로 필요한 재료</span>
+                  <span className="rounded-full bg-orange-500 px-2 py-0.5 text-xs text-white">
+                    {data.ingredients.filter(i => i.isAvailable === false).length}개
+                  </span>
+                </div>
+                <ul className="divide-y divide-orange-200/50">
+                  {data.ingredients.filter(i => i.isAvailable === false).map((i, idx) => (
+                    <li key={idx} className="flex items-center justify-between py-3">
+                      <span className="font-medium text-orange-700">
+                        🛒 {i.ingredientName}
+                      </span>
+                      <span className="text-orange-700">{i.quantity || "적당량"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          // AI가 아닌 일반 레시피의 경우 기존 방식으로 표시
+          <div className="rounded-2xl bg-[#4CAF50]/10 p-5 ring-1 ring-[#4CAF50]/20">
+            <ul className="divide-y divide-[#4CAF50]/15">
+              {data.ingredients.map((i, idx) => (
+                <li key={idx} className="flex items-center justify-between py-3">
+                  <span className="font-medium text-[#2e7d32]">
+                    {i.ingredientName}
+                  </span>
+                  <span className="text-[#2e7d32]">{i.quantity || "적당량"}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       <section ref={stepsRef} data-observe-id="steps" className="mt-8">
@@ -526,10 +577,10 @@ export default function RecipeDetail() {
         <div className="rounded-2xl bg-[#4CAF50]/10 p-5 ring-1 ring-[#4CAF50]/20">
           <div className="flex items-center gap-3">
             <div className="text-4xl font-bold text-[#2e7d32]">
-              {data.averageRating.toFixed(1)}
+              {(data.averageRating ?? 0).toFixed(1)}
             </div>
             <div>
-              <RecipeRating value={data.averageRating} />
+              <RecipeRating value={data.averageRating ?? 0} />
               {myRating > 0 && (
                 <p className="text-sm text-gray-600 mt-1">
                   내 별점: <span className="font-semibold">{myRating}점</span>

@@ -11,17 +11,19 @@ export interface RecipeSummary {
   title: string;
   description?: string;
   mainImageUrl?: string;
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-  cookingTime: number;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD'; // 크롤링 레시피는 null일 수 있음
+  cookingTime?: number; // 크롤링 레시피는 null일 수 있음
   servings?: number;
   category?: string;
-  viewCount: number;
-  likeCount: number;
-  commentCount: number;
-  saveCount: number;
-  averageRating: number;
-  authorName: string;
-  createdAt: string;
+  viewCount?: number; // 크롤링 레시피는 null일 수 있음
+  likeCount?: number; // 크롤링 레시피는 null일 수 있음
+  commentCount?: number;
+  saveCount?: number;
+  averageRating: number; // 크롤링 레시피는 null일 수 있음
+  authorName?: string;
+  createdAt?: string;
+  source?: 'LOCAL_DB' | 'EXTERNAL_CRAWL'; // 레시피 출처 (백엔드 RecipeSource enum과 매칭)
+  url?: string; // 크롤링된 레시피의 외부 URL (EXTERNAL_CRAWL일 때만 존재)
 }
 
 export interface RecipeDetail extends RecipeSummary {
@@ -33,6 +35,7 @@ export interface RecipeDetail extends RecipeSummary {
 export interface RecipeIngredient {
   ingredientName: string;
   quantity: string;
+  isAvailable?: boolean; // AI 레시피용: 냉장고에 있는 재료인지 여부
 }
 
 export interface RecipeStep {
@@ -210,7 +213,7 @@ export const getInteractionStatus = async (
  * 냉장고 재료 기반 추천
  */
 export const getRecommendations = async (): Promise<RecipeSummary[]> => {
-  return apiGet<RecipeSummary[]>('/api/recipes/recommendations');
+  return apiGet<RecipeSummary[]>('/api/recipes/recommendations/unified');
 };
 
 /**
@@ -219,7 +222,7 @@ export const getRecommendations = async (): Promise<RecipeSummary[]> => {
 export const getRecommendationsByIngredients = async (
   ingredients: string[]
 ): Promise<RecipeSummary[]> => {
-  return apiPost<RecipeSummary[]>('/api/recipes/recommendations', { ingredients });
+  return apiPost<RecipeSummary[]>('/api/recipes/recommendations/unified', { ingredients });
 };
 
 // ===== 레시피 상호작용 API =====

@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Api, type Category, type FridgeItemDTO } from "../lib/api";
+import { Api, type Category, type FridgeItemDTO, type ClassifiedMap, type ClassifiedItem } from "../lib/api";
 
 type Draft = { name: string; category: Category; amount: string; storage: "냉장"|"냉동"|"실온"; purchaseDate?: string; expireDate?: string; memo?: string; };
+type OcrStage = 'upload' | 'recognize' | 'extract' | 'complete';
+
+const STAGE_INFO: Record<OcrStage, { label: string; emoji: string }> = {
+  upload: { label: '영수증 업로드 중', emoji: '📤' },
+  recognize: { label: 'OCR 텍스트 인식 중', emoji: '🔍' },
+  extract: { label: '재료 데이터 추출 중', emoji: '📊' },
+  complete: { label: '처리 완료', emoji: '✅' },
+};
 
 export default function UploadDialog({
   open, onClose, onAddToFridge,
@@ -12,31 +20,49 @@ export default function UploadDialog({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
-  const [classified, setClassified] = useState<Record<Category, string[]> | null>(null);
+  const [stage, setStage] = useState<OcrStage>('upload');
+  const [classified, setClassified] = useState<ClassifiedMap | null>(null);
   const [editing, setEditing] = useState<{ idx: number; cat: Category; draft: Draft } | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setFile(null); setProgress(0); setClassified(null);
+      setFile(null); setProgress(0); setStage('upload'); setClassified(null);
       setEditing(null); setDrafts([]); setError(null);
     }
   }, [open]);
 
   const onPick = async (f: File) => {
-    setFile(f); setProgress(0); setClassified(null); setError(null);
+    setFile(f); setProgress(0); setStage('upload'); setClassified(null); setError(null);
     try {
-      const res = await Api.parseReceipt(f, setProgress);
+      const res = await Api.parseReceipt(f, (p) => {
+        setProgress(p);
+        if (p < 33) {
+          setStage('upload');
+        } else if (p < 66) {
+          setStage('recognize');
+        } else if (p < 100) {
+          setStage('extract');
+        } else {
+          setStage('complete');
+        }
+      });
       setClassified(res);
+      setStage('complete');
 
-      const today = new Date(); const toISO = (d: Date) => d.toISOString().slice(0, 10);
-      const seven = new Date(today); seven.setDate(seven.getDate() + 7);
       const base: Draft[] = [];
       (Object.keys(res) as Category[]).forEach((cat) => {
-        res[cat].forEach((name) =>
-          base.push({ name, category: cat, amount: "1개", storage: "냉장", purchaseDate: toISO(today), expireDate: toISO(seven) })
-        );
+        res[cat].forEach((item: ClassifiedItem) => {
+          base.push({
+            name: item.name,
+            category: cat,
+            amount: `${item.quantity}개`,
+            storage: "냉장",
+            purchaseDate: item.purchaseDate,
+            expireDate: item.expireDate
+          });
+        });
       });
       setDrafts(base);
     } catch (e: any) {
@@ -83,14 +109,37 @@ export default function UploadDialog({
         </label>
 
         {file && (
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
             <div className="flex justify-between text-sm text-slate-600 mb-1">
-              <span>{file.name}</span><span>{progress}%</span>
+              <span>{file.name}</span><span className="font-semibold">{progress}%</span>
             </div>
             <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: "var(--color-primary)" }} />
+              <div className="h-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: "var(--color-primary)" }} />
             </div>
-            {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
+
+            {/* 처리 단계 표시 */}
+            {progress > 0 && progress < 100 && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
+                <div className="text-lg">{STAGE_INFO[stage].emoji}</div>
+                <div className="text-sm">
+                  <div className="font-semibold text-slate-700">{STAGE_INFO[stage].label}</div>
+                  <div className="text-xs text-slate-500">
+                    {stage === 'upload' && '파일을 서버에 전송하는 중...'}
+                    {stage === 'recognize' && 'AI가 영수증 텍스트를 읽고 있습니다...'}
+                    {stage === 'extract' && '재료 정보를 분류하고 정리하는 중...'}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="p-2 rounded-lg bg-red-50 border border-red-200">
+                <div className="flex items-center gap-2 text-red-700">
+                  <span>⚠️</span>
+                  <span className="text-sm">{error}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -103,11 +152,14 @@ export default function UploadDialog({
                 <div key={cat} className="border border-[color:var(--border-soft)] rounded-[14px] p-4">
                   <div className="font-semibold mb-2">{cat}</div>
                   <ul className="space-y-2">
-                    {classified![cat].map((name, i) => {
-                      const idx = drafts.findIndex((d) => d.name === name && d.category === cat);
+                    {classified![cat].map((item, i) => {
+                      const idx = drafts.findIndex((d) => d.name === item.name && d.category === cat);
                       return (
-                        <li key={`${cat}-${name}-${i}`} className="flex items-center justify-between text-sm">
-                          <span className="truncate">{name}</span>
+                        <li key={`${cat}-${item.name}-${i}`} className="flex items-center justify-between text-sm">
+                          <span className="truncate">
+                            {item.name}
+                            {item.quantity > 1 && <span className="ml-1 text-xs text-slate-500">x{item.quantity}</span>}
+                          </span>
                           <div className="flex items-center gap-2">
                             <button className="px-2 h-7 rounded-full border border-[color:var(--border-soft)]"
                                     onClick={() => setEditing({ idx, cat, draft: drafts[idx] })}>

@@ -1,12 +1,12 @@
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import IngredientSelector from "../../components/IngredientSelector";
 import type { Category } from "../../components/IngredientSelector";
-import RecipeRating from "../../components/RecipeRating";
-import Tag from "../../components/Tag";
-import type { Recipe } from "../../lib/recipes";
 import { generateAiRecipe } from "../../services/ai";
 
 export default function AIRecipeCreate() {
+  const nav = useNavigate();
+
   // 좌측 사이드바 선택값
   const [selected, setSelected] = useState<string[]>([]);
   const [category, setCategory] = useState<Category>("모두");
@@ -14,30 +14,55 @@ export default function AIRecipeCreate() {
   // 프롬프트 & 생성 상태
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
+
+  // 중복 요청 방지를 위한 ref
+  const isGeneratingRef = useRef(false);
+  const lastRequestRef = useRef<string>("");
 
   const onGenerate = async () => {
+    // 1. 이미 진행 중인 요청이 있으면 차단
+    if (isGeneratingRef.current) {
+      console.warn("⚠️ Request already in progress, ignoring duplicate click");
+      return;
+    }
+
+    // 2. 요청 고유 식별자 생성 (재료 + 프롬프트 해시)
+    const requestSignature = JSON.stringify({
+      ingredients: selected.sort(),
+      prompt: prompt.trim()
+    });
+
+    // 3. 동일한 요청이 최근에 있었는지 확인 (중복 방지)
+    if (lastRequestRef.current === requestSignature) {
+      console.warn("⚠️ Duplicate request detected, ignoring");
+      alert("동일한 요청이 이미 처리 중이거나 최근에 처리되었습니다.");
+      return;
+    }
+
+    // 4. 요청 시작
+    isGeneratingRef.current = true;
+    lastRequestRef.current = requestSignature;
     setLoading(true);
+
     try {
-      const r = await generateAiRecipe({
+      const generatedRecipe = await generateAiRecipe({
         ingredients: selected,
         prompt,
       });
-      setRecipe(r);
-      // 결과로 스크롤
-      requestAnimationFrame(() =>
-        resultRef.current?.scrollIntoView({ behavior: "smooth" })
-      );
+
+      // RecipeDetail 페이지로 이동
+      nav(`/recipes/${generatedRecipe.recipeId}`);
     } catch (e) {
       console.error(e);
       alert("레시피 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
+
+      // 실패 시 중복 요청 방지 해제 (재시도 가능하도록)
+      lastRequestRef.current = "";
     } finally {
       setLoading(false);
+      isGeneratingRef.current = false;
     }
   };
-
-  const onRegenerate = () => onGenerate();
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -90,79 +115,7 @@ export default function AIRecipeCreate() {
             </div>
           </section>
 
-          {/* 생성 결과: 상세 레이아웃 (이미지 빈 칸) */}
-          {recipe && (
-            <section ref={resultRef} className="mt-8">
-              {/* 대표 이미지 자리(빈 박스) */}
-              <div className="flex h-[320px] w-full items-center justify-center rounded-2xl bg-gray-100">
-                <span className="text-4xl">🥗</span>
-              </div>
-
-              <header className="mt-6">
-                <h2 className="text-[26px] font-bold">{recipe.title}</h2>
-                <div className="mt-2 flex items-center gap-3 text-gray-500">
-                  <span>⏱ {recipe.timeMinutes}분</span>
-                  <span>•</span>
-                  <span>{recipe.level}</span>
-                  <span>•</span>
-                  <RecipeRating value={recipe.rating ?? 0} />
-                  <span className="text-sm text-gray-400">
-                    {recipe.ratingCount?.toLocaleString()}명 참여
-                  </span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {recipe.tags.map((t) => (
-                    <Tag key={t} text={t} />
-                  ))}
-                </div>
-              </header>
-
-              <section className="mt-6">
-                <h3 className="mb-3 font-semibold">필요한 재료</h3>
-                <div className="rounded-2xl bg-[#4CAF50]/10 p-5 ring-1 ring-[#4CAF50]/20">
-                  <ul className="divide-y divide-[#4CAF50]/15">
-                    {recipe.ingredients.map((i) => (
-                      <li
-                        key={i.id}
-                        className="flex items-center justify-between py-3"
-                      >
-                        <span className="font-medium text-[#2e7d32]">
-                          {i.name}
-                          {i.amount ? ` · ${i.amount}` : ""}
-                        </span>
-                        <span className="text-[#2e7d32]">냉장고에 있음</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </section>
-
-              <section className="mt-8">
-                <h3 className="mb-3 font-semibold">조리 순서</h3>
-                <ol className="space-y-3">
-                  {recipe.steps.map((s, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4CAF50]/15 font-semibold text-[#2e7d32]">
-                        {idx + 1}
-                      </span>
-                      <div className="flex-1 rounded-xl bg-[#4CAF50]/10 px-4 py-3">
-                        {s}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-
-              <div className="mt-10 text-right">
-                <button
-                  onClick={onRegenerate}
-                  className="rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm hover:bg-gray-50"
-                >
-                  다른 레시피 받아보기
-                </button>
-              </div>
-            </section>
-          )}
+          {/* 생성 후 RecipeDetail 페이지로 이동하므로 여기서는 결과를 표시하지 않음 */}
         </main>
       </div>
     </div>

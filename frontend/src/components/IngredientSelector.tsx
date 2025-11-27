@@ -1,14 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { getRefrigeratorItems, type RefrigeratorItem } from "../api/refrigerator";
 
 export type Category = "모두" | "한식" | "중식" | "양식" | "일식" | "디저트" | "기타";
 export type Level = "모두" | "쉬움" | "보통" | "어려움";
-
-type Group = { label: string; options: { id: string; name: string }[] };
-const GROUPS: Group[] = [
-  { label: "채소", options: [{ id: "i-tomato", name: "토마토" }, { id: "i-onion", name: "양파" }, { id: "i-garlic", name: "마늘" }] },
-  { label: "육류", options: [{ id: "i-pork", name: "돼지고기" }, { id: "i-chicken", name: "닭가슴살" }] },
-  { label: "기타", options: [{ id: "i-spaghetti", name: "스파게티면" }, { id: "i-olive", name: "올리브 오일" }] },
-];
 
 type Props = {
   value: string[];
@@ -29,9 +23,65 @@ export default function IngredientSelector({
   onLevelChange,
 }: Props) {
   const [q, setQ] = useState("");
+  const [items, setItems] = useState<RefrigeratorItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const CATS: Category[] = ["모두", "한식", "중식", "양식", "일식", "디저트", "기타"];
   const LEVELS: Level[] = ["모두", "쉬움", "보통", "어려움"];
+
+  // Fetch refrigerator items on mount
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getRefrigeratorItems();
+        if (mounted) {
+          setItems(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch refrigerator items:', err);
+        if (mounted) {
+          setError('냉장고 재료를 불러오는데 실패했습니다.');
+          setItems([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchItems();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Convert refrigerator items to groups
+  const groups = useMemo(() => {
+    const categoryMap = new Map<string, { id: string; name: string }[]>();
+
+    items.forEach((item) => {
+      const categoryLabel = item.category || "기타";
+      if (!categoryMap.has(categoryLabel)) {
+        categoryMap.set(categoryLabel, []);
+      }
+      categoryMap.get(categoryLabel)!.push({
+        id: item.ingredientName,
+        name: item.ingredientName,
+      });
+    });
+
+    return Array.from(categoryMap.entries()).map(([label, options]) => ({
+      label,
+      options,
+    }));
+  }, [items]);
 
   const toggle = (id: string) =>
     onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
@@ -54,29 +104,44 @@ export default function IngredientSelector({
 
         {/* 재료 체크박스 */}
         <div className="mt-5 space-y-5">
-          {GROUPS.map((g) => (
-            <div key={g.label}>
-              <div className="mb-2 text-xs font-medium text-gray-500">{g.label}</div>
-              <ul className="space-y-2">
-                {g.options
-                  .filter((o) => o.name.includes(q))
-                  .map((o) => (
-                    <li key={o.id} className="flex items-center gap-2">
-                      <input
-                        id={o.id}
-                        type="checkbox"
-                        checked={value.includes(o.id)}
-                        onChange={() => toggle(o.id)}
-                        className="size-4 accent-[#4CAF50]"
-                      />
-                      <label htmlFor={o.id} className="text-sm">
-                        {o.name}
-                      </label>
-                    </li>
-                  ))}
-              </ul>
+          {loading ? (
+            <div className="py-8 text-center">
+              <div className="inline-block w-6 h-6 border-2 border-t-transparent border-[#4CAF50] rounded-full animate-spin"></div>
+              <p className="mt-2 text-sm text-gray-500">재료 불러오는 중...</p>
             </div>
-          ))}
+          ) : error ? (
+            <div className="rounded-xl bg-red-50 p-4 text-center">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          ) : groups.length === 0 ? (
+            <div className="rounded-xl bg-gray-50 p-4 text-center">
+              <p className="text-sm text-gray-500">냉장고에 등록된 재료가 없습니다.</p>
+            </div>
+          ) : (
+            groups.map((g) => (
+              <div key={g.label}>
+                <div className="mb-2 text-xs font-medium text-gray-500">{g.label}</div>
+                <ul className="space-y-2">
+                  {g.options
+                    .filter((o) => o.name.includes(q))
+                    .map((o) => (
+                      <li key={o.id} className="flex items-center gap-2">
+                        <input
+                          id={o.id}
+                          type="checkbox"
+                          checked={value.includes(o.id)}
+                          onChange={() => toggle(o.id)}
+                          className="size-4 accent-[#4CAF50]"
+                        />
+                        <label htmlFor={o.id} className="text-sm">
+                          {o.name}
+                        </label>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))
+          )}
         </div>
 
         {/* 요리종류 */}
