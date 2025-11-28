@@ -2,6 +2,7 @@ import { useFridge } from "../lib/useFridge";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Category, FridgeItemDTO } from "../lib/api";
+import fridgeEmoji from "../assets/fridge_emoji.png";
 
 type FreshStatus = "신선" | "임박" | "만료";
 
@@ -11,13 +12,25 @@ function getStatus(item: FridgeItemDTO): FreshStatus {
   const today = new Date();
   end.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
-  const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil(
+    (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
   if (diffDays < 0) return "만료";
   if (diffDays <= 3) return "임박";
   return "신선";
 }
 
-const CAT_OPTIONS: Category[] = ["육류", "해산물", "채소", "과일", "유제품/계란", "가공식품", "기타"];
+const CAT_OPTIONS: Category[] = [
+  "육류",
+  "해산물",
+  "채소",
+  "과일",
+  "유제품/계란",
+  "가공식품",
+  "기타",
+];
+
+const STATUS_OPTIONS: ("ALL" | FreshStatus)[] = ["ALL", "신선", "임박", "만료"];
 
 export default function Fridge() {
   const { items, loading, err, remove } = useFridge();
@@ -58,62 +71,124 @@ export default function Fridge() {
     );
   };
 
+  const hasActiveFilter =
+    q.trim().length > 0 || cat !== "ALL" || st !== "ALL";
+
+  const resetFilters = () => {
+    setQ("");
+    setCat("ALL");
+    setSt("ALL");
+  };
+
   return (
     <div>
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-[26px] md:text-[28px] font-extrabold tracking-[-0.02em]">나의 냉장고</h1>
-        <p className="text-[14px] text-slate-500 mt-1">냉장고 속 재료를 확인하고 관리하세요.</p>
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* 제목 영역 */}
+        <section>
+          <div className="flex items-center gap-5">
+            <img
+              src={fridgeEmoji}
+              alt="냉장고 아이콘"
+              className="w-12"
+            />
 
+            {/* 제목 + 설명을 세로로 배치 */}
+            <div className="flex flex-col">
+              <h1 className="text-[26px] md:text-[28px] font-extrabold tracking-[-0.02em]">
+                나의 냉장고
+              </h1>
+              <p className="text-[14px] text-slate-500 mt-0.5">
+                냉장고 속 재료를 확인하고 관리하세요.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 🔹 필터 카드 – 제목 영역과 구분되는 박스 */}
+        <section className="mt-6 border-t border-b border-slate-200 pt-3 pb-4">
+          {/* 🏷 카테고리 필터 pill 버튼 */}
+          <div className="mt-1">
+            <div className="text-xs font-medium text-slate-500 mb-1">
+              카테고리
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(["ALL", ...CAT_OPTIONS] as ("ALL" | Category)[]).map((c) => {
+                const active = cat === c;
+                const label = c === "ALL" ? "전체" : c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCat(c)}
+                    className={[
+                      "px-4 h-9 rounded-full text-sm border transition-colors",
+                      active
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 🍃 신선도(상태) 필터 pill 버튼 */}
+          <div className="mt-4">
+            <div className="text-xs font-medium text-slate-500 mb-1">
+              신선도
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {STATUS_OPTIONS.map((sOpt) => {
+                const active = st === sOpt;
+                const label = sOpt === "ALL" ? "모든 상태" : sOpt;
+                return (
+                  <button
+                    key={sOpt}
+                    type="button"
+                    onClick={() => setSt(sOpt)}
+                    className={[
+                      "px-4 h-9 rounded-full text-sm border transition-colors",
+                      active
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* 📦 재료 리스트 카드 */}
         <div className="bg-white rounded-[20px] border border-gray-200 p-6 shadow-sm mt-6">
-          {/* 필터 바 */}
+          {/* 🔍 검색 + 추가 버튼 */}
           <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-[220px]">
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="재료명 검색…"
-                className="h-10 px-3 rounded-full border border-gray-300 w-[200px]"
+                className="w-full h-10 px-4 rounded-full border border-gray-300 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-emerald-400"
               />
-
-              <select
-                value={cat}
-                onChange={(e) => setCat(e.target.value as any)}
-                className="h-10 px-3 rounded-full border border-gray-300"
-                aria-label="카테고리 필터"
-              >
-                <option value="ALL">모든 카테고리</option>
-                {CAT_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={st}
-                onChange={(e) => setSt(e.target.value as any)}
-                className="h-10 px-3 rounded-full border border-gray-300"
-                aria-label="상태 필터"
-              >
-                <option value="ALL">모든 상태</option>
-                <option value="신선">신선</option>
-                <option value="임박">임박(3일 내 만료)</option>
-                <option value="만료">만료</option>
-              </select>
             </div>
 
             <button
               onClick={() => nav("/fridge/edit/new")}
-              className="px-4 h-10 rounded-full text-white bg-green-600 hover:bg-green-700"
+              className="px-4 h-10 rounded-full text-white bg-green-600 hover:bg-green-700 text-sm whitespace-nowrap"
             >
               + 재료 추가
             </button>
           </div>
 
-          <div className="overflow-auto">
+          {/* 📋 테이블 */}
+          <div className="overflow-auto mt-4">
             <table className="min-w-[880px] w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500">
+                <tr className="text-left text-slate-500 border-b border-gray-100">
                   <th className="py-2">재료명</th>
                   <th className="py-2">수량</th>
                   <th className="py-2">구매일자</th>
@@ -126,19 +201,28 @@ export default function Fridge() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-slate-500">
+                    <td
+                      colSpan={7}
+                      className="py-10 text-center text-slate-500"
+                    >
                       불러오는 중…
                     </td>
                   </tr>
                 ) : err ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-red-600">
+                    <td
+                      colSpan={7}
+                      className="py-10 text-center text-red-600"
+                    >
                       {err}
                     </td>
                   </tr>
                 ) : view.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-slate-500">
+                    <td
+                      colSpan={7}
+                      className="py-10 text-center text-slate-500"
+                    >
                       조건에 맞는 재료가 없습니다.
                     </td>
                   </tr>
@@ -159,13 +243,13 @@ export default function Fridge() {
                           <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => nav(`/fridge/edit/${it.id}`)}
-                              className="px-3 h-8 rounded-full border border-gray-300"
+                              className="px-3 h-8 rounded-full border border-gray-300 text-xs"
                             >
                               수정
                             </button>
                             <button
                               onClick={() => remove(it.id)}
-                              className="px-3 h-8 rounded-full text-white bg-red-500 hover:bg-red-600"
+                              className="px-3 h-8 rounded-full text-xs text-white bg-red-500 hover:bg-red-600"
                             >
                               삭제
                             </button>

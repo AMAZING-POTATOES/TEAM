@@ -52,7 +52,7 @@ export default function FridgeEdit() {
 
   return (
     <div>
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">
           {id === "new" ? "새 품목 추가" : "품목 정보 수정"}
         </h1>

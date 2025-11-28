@@ -44,7 +44,7 @@ body {
 }
 
 .animate-popular-carousel {
-  animation: popular-carousel 28s linear infinite;
+  animation: popular-carousel 35s linear infinite;
 }
 
 .animate-popular-carousel:hover {

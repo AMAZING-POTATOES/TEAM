@@ -84,7 +84,7 @@ export default function RecipeCommunity() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="레시피를 검색해보세요 (e.g., 김치찌개)"
-          className="flex-1 rounded-xl border border-gray-200 px-3 py-2"
+          className="flex-1 rounded-full border border-gray-200 px-3 py-2 focus-ring-1 focus-ring-grenn-600"
         />
         <select
           value={sort}
@@ -92,8 +92,8 @@ export default function RecipeCommunity() {
           className="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white"
           aria-label="정렬"
         >
-          <option value="인기">Sort: 인기</option>
-          <option value="최신">Sort: 최신</option>
+          <option value="인기">인기</option>
+          <option value="최신">최신</option>
         </select>
       </div>
 

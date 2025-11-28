@@ -33,7 +33,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur border-b border-slate-200">
 
-      <div className="max-w-6xl mx-auto h-16 px-4 flex items-center justify-between relative">
+      <div className="max-w-7xl mx-auto h-16 px-4 flex items-center justify-between relative">
         <button
           onClick={() => nav("/dashboard?intro=1")}
           className="flex items-center gap-2 shrink-0"
@@ -82,7 +82,7 @@ export default function Navbar() {
       {/* 레시피 하위 메뉴 */}
       {inRecipes && (
         <div className="border-t border-gray-100 bg-white">
-          <div className="max-w-6xl mx-auto h-12 px-4 flex items-center gap-2">
+          <div className="max-w-7xl mx-auto h-12 px-4 flex items-center gap-2">
             <NavLink to="/recipes" end className={subNavClass}>
               레시피 추천
             </NavLink>

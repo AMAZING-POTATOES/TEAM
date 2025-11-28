@@ -7,6 +7,7 @@ import Tag from "../../components/Tag";
 import { searchRecipes } from "../../services/recipes";
 import { generateAiRecipe } from "../../services/ai";
 import type { Recipe } from "../../lib/recipes";
+import recipeEmoji from "../../assets/recipe_emoji.png";
 
 type Mode = "ingredient" | "ai";
 type Category = "모두" | "한식" | "중식" | "양식" | "일식" | "디저트" | "기타";
@@ -62,12 +63,25 @@ export default function RecipeHome() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      <header>
-        <h1 className="text-[28px] font-bold">내 냉장고 재료로 만드는 레시피</h1>
-        <p className="mt-1 text-gray-500">
-          가지고 있는 재료를 선택하고 맞춤 레시피를 찾아보세요.
-        </p>
-      </header>
+      <section>
+          <div className="flex items-center gap-5">
+            <img
+              src={recipeEmoji}
+              alt="레시피 아이콘"
+              className="w-22"
+            />
+
+            {/* 제목 + 설명을 세로로 배치 */}
+            <div className="flex flex-col">
+              <h1 className="text-[26px] md:text-[28px] font-extrabold tracking-[-0.02em]">
+                내 냉장고 재료로 만드는 레시피
+              </h1>
+              <p className="text-[14px] text-slate-500 mt-0.5">
+                가지고 있는 재료를 선택하고 맞춤 레시피를 찾아보세요.
+              </p>
+            </div>
+          </div>
+        </section>
 
       <div className="mt-8 flex gap-8">
         <IngredientSelector
