@@ -6,17 +6,22 @@ import { useAuth } from "../app/AuthProvider";
 import dashboardBannerVideo from "../assets/banner.mp4";
 import IntroOverlay from "../components/IntroOverlay";
 import receiptEmoji from "../assets/receipt_emoji.png";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import type { CredentialResponse } from "@react-oauth/google";
+import { loginWithGoogle, saveToken, saveUser } from "../api/auth";
+import potatoIcon from "../assets/potato.png";
 
 export default function Dashboard() {
   const nav = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // 🔹 인트로 표시 여부: 첫 방문 + ?intro=1 이면 무조건 표시
   const [showIntro, setShowIntro] = useState<boolean>(() => {
@@ -106,6 +111,68 @@ export default function Dashboard() {
     finishIntroCommon();
   };
 
+  // 🔹 Google 로그인 핸들러
+  const handleGoogleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      setIsLoggingIn(true);
+      console.log("Google Login Success:", credentialResponse);
+
+      // Google ID Token 확인
+      if (!credentialResponse.credential) {
+        throw new Error("Google credential not found");
+      }
+
+      // 백엔드로 ID Token 전송
+      const response = await loginWithGoogle(credentialResponse.credential);
+      console.log("Backend login success:", response);
+
+      // JWT 토큰 저장
+      saveToken(response.accessToken);
+
+      // 사용자 정보 저장
+      saveUser({
+        userId: response.userId,
+        email: response.email,
+        name: response.name,
+        picture: response.picture,
+      });
+
+      // AuthProvider 상태 업데이트
+      setUser({
+        userId: response.userId,
+        email: response.email,
+        name: response.name,
+        picture: response.picture,
+      });
+
+      // 성공 후 페이지 새로고침하여 대시보드 데이터 로드
+      window.location.reload();
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("로그인에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleGoogleLoginError = () => {
+    console.error("Google Login Failed");
+    alert("Google 로그인에 실패했습니다.");
+  };
+
+  // 🔹 로그인 페이지에서 스크롤 방지
+  useEffect(() => {
+    if (error) {
+      const isAuthError = error.includes("인증") || error.includes("로그인") || error.includes("401") || error.includes("403");
+      if (isAuthError) {
+        document.body.style.overflow = "hidden";
+        return () => {
+          document.body.style.overflow = "";
+        };
+      }
+    }
+  }, [error]);
+
   // 🔹 대시보드 데이터 로드 (백엔드 연동 그대로 유지)
   useEffect(() => {
     const loadDashboard = async () => {
@@ -171,8 +238,10 @@ export default function Dashboard() {
     );
   }
 
-  // 🔹 에러 상태
+  // 🔹 에러 상태 - 인증 오류 시 로그인 페이지로 표시
   if (error) {
+    const isAuthError = error.includes("인증") || error.includes("로그인") || error.includes("401") || error.includes("403");
+
     return (
       <>
         {showIntro && (
@@ -182,17 +251,70 @@ export default function Dashboard() {
             onFinishLoggedOut={handleIntroFinishLoggedOut}
           />
         )}
-        <div className="min-h-screen grid place-items-center">
-          <div className="text-center max-w-md px-4">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold mb-2">데이터를 불러올 수 없습니다</h2>
-            <p className="text-[color:var(--text-secondary)] mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90"
-            >
-              다시 시도
-            </button>
+        <div className="h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 grid place-items-center px-4">
+          <div className="text-center max-w-lg">
+            {isAuthError ? (
+              // 인증 오류 - 로그인 페이지 UI
+              <div className="bg-white rounded-[24px] shadow-lg border border-gray-100 p-8 md:p-10">
+                <div className="mb-6">
+                  <div className="w-21 h-21 mx-auto mb-4 flex items-center justify-center">
+                    <img src={potatoIcon} alt="감자" className="w-full h-full object-contain" />
+                  </div>
+                  <h1 className="text-[28px] md:text-[32px] font-extrabold tracking-[-0.02em] text-slate-800 mb-3">
+                    로그인이 필요해요
+                  </h1>
+                  <p className="text-[15px] text-slate-600 leading-relaxed">
+                    싹난감자 서비스를 이용하시려면<br />
+                    구글 계정으로 로그인해주세요
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <GoogleOAuthProvider clientId={import.meta.env.VITE_CLIENT_ID}>
+                    <div className={`flex justify-center ${isLoggingIn ? "opacity-50 pointer-events-none" : ""}`}>
+                      <GoogleLogin
+                        onSuccess={handleGoogleLoginSuccess}
+                        onError={handleGoogleLoginError}
+                        theme="outline"
+                        size="large"
+                        text="signin_with"
+                        width="100%"
+                      />
+                    </div>
+                    {isLoggingIn && (
+                      <p className="text-sm text-center text-blue-600 mt-2">
+                        로그인 처리 중...
+                      </p>
+                    )}
+                  </GoogleOAuthProvider>
+
+                  <p className="text-xs text-slate-500 pt-6">
+                    로그인하시면 <a href="/terms" className="underline hover:text-slate-700">이용약관</a> 및 <a href="/privacy" className="underline hover:text-slate-700">개인정보처리방침</a>에 동의하게 됩니다
+                  </p>
+                </div>
+                <div className="mt-6">
+                  <div className="pt-6 border-t-2 border-slate-200"></div>
+                  <p className="text-sm text-slate-600 mb-2">💡 싹난감자가 처음이신가요?</p>
+                  <p className="text-xs text-slate-500">
+                    영수증을 업로드하면 AI가 자동으로 재료를 분류하고<br />
+                    냉장고 속 재료로 만들 수 있는 레시피를 추천해드려요
+                  </p>
+                </div>
+              </div>
+            ) : (
+              // 일반 오류 - 기존 에러 페이지
+              <div className="bg-white rounded-[24px] shadow-lg border border-gray-100 p-8 md:p-10">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h2 className="text-xl font-bold mb-2">데이터를 불러올 수 없습니다</h2>
+                <p className="text-[color:var(--text-secondary)] mb-6">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 rounded-full bg-[color:var(--color-primary)] text-white font-medium hover:opacity-90 transition"
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </>
