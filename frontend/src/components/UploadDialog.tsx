@@ -155,17 +155,16 @@ export default function UploadDialog({
                     {classified![cat].map((item, i) => {
                       const idx = drafts.findIndex((d) => d.name === item.name && d.category === cat);
                       return (
-                        <li key={`${cat}-${item.name}-${i}`} className="flex items-center justify-between text-sm">
-                          <span className="truncate">
+                        <li key={`${cat}-${item.name}-${i}`} className="flex items-center gap-3 text-sm px-3 py-2 rounded-full bg-white border border-[color:var(--border-soft)] max-w-full">
+                          <span className="flex-1 min-w-0 truncate text-slate-800">
                             {item.name}
-                            {item.quantity > 1 && <span className="ml-1 text-xs text-slate-500">x{item.quantity}</span>}
                           </span>
-                          <div className="flex items-center gap-2">
-                            <button className="px-2 h-7 rounded-full border border-[color:var(--border-soft)]"
+                          <div className="flex items-center gap-2 flex-none">
+                            <button className="px-2 h-7 rounded-full border border-[color:var(--border-soft)] text-xs"
                                     onClick={() => setEditing({ idx, cat, draft: drafts[idx] })}>
                               수정
                             </button>
-                            <button className="px-2 h-7 rounded-full text-white"
+                            <button className="px-2 h-7 rounded-full text-xs text-white"
                                     style={{ backgroundColor: "var(--warn)" }}
                                     onClick={() => removeDraft(idx)}>
                               삭제

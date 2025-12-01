@@ -114,12 +114,6 @@ export default function UploadReceipt() {
     setError(null);
   };
 
-  const Tag = ({ children }: { children: React.ReactNode }) => (
-    <span className="inline-flex items-center gap-1 px-3 h-9 rounded-lg border border-gray-200 bg-white shadow-sm">
-      {children}
-    </span>
-  );
-
   return (
     <div>
       <main className="max-w-[1080px] mx-auto px-4 py-8">
@@ -295,15 +289,12 @@ export default function UploadReceipt() {
                       return (
                         <div
                           key={`${cat}-${item.name}-${idx}`}
-                          className="flex items-center justify-between"
+                          className="flex items-center gap-3 px-3 py-2 rounded-full bg-white border border-gray-200 shadow-sm"
                         >
-                          <Tag>
-                            <span className="truncate max-w-[220px]">
-                              {item.name}
-                              {item.quantity > 1 && <span className="ml-1 text-xs text-gray-500">x{item.quantity}</span>}
-                            </span>
-                          </Tag>
-                          <div className="flex items-center gap-2 text-[13px]">
+                          <span className="flex-1 min-w-0 truncate text-slate-800 text-[14px]">
+                            {item.name}
+                          </span>
+                          <div className="flex items-center gap-2 text-[13px] flex-none">
                             <button
                               className="px-3 h-8 rounded-full border border-gray-300"
                               onClick={() => {
@@ -319,7 +310,7 @@ export default function UploadReceipt() {
                                 );
                               }}
                             >
-                              수량 {d.amount}
+                              수량
                             </button>
                             <button
                               className="px-3 h-8 rounded-full border border-gray-300"

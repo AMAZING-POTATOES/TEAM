@@ -212,7 +212,7 @@ export default function Dashboard() {
 
       {/* 🔹 실제 대시보드 내용 */}
       <div>
-        <main className="max-w-6xl mx-auto px-4 pt-0 pb-6 space-y-6">
+        <main className="max-w-7xl mx-auto px-4 pt-0 pb-6 space-y-6">
           {/* ✅ 오늘 요약 바 */}
           <section className="mt-3">
             <div className="rounded-2xl px-4 py-3 flex flex-wrap gap-3 items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100/70 border border-blue-100">
@@ -379,7 +379,7 @@ export default function Dashboard() {
             "
           >
             {/* 제목은 기존 레이아웃에 맞게 가운데 정렬 */}
-            <div className="max-w-6xl mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4">
               <h2 className="text-[22px] md:text-[24px] font-bold tracking-[-0.01em] mb-3">
                 지금 인기있는 레시피
               </h2>
