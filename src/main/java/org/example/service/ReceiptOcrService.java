@@ -1,11 +1,13 @@
 package org.example.service;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -122,11 +124,42 @@ public class ReceiptOcrService {
      */
     private ImageAnnotatorClient createVisionClient() throws IOException {
         if (visionKeyPath != null && !visionKeyPath.trim().isEmpty()) {
+            System.out.println("🔑 [DEBUG] Loading Vision API key from: " + visionKeyPath);
+
+            // 파일 존재 확인
+            File keyFile = new File(visionKeyPath);
+            if (!keyFile.exists()) {
+                throw new IOException("Service account key file not found: " + visionKeyPath);
+            }
+
+            System.out.println("✅ [DEBUG] Key file exists, size: " + keyFile.length() + " bytes");
+
+            // 환경 변수 설정
+            System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", keyFile.getAbsolutePath());
+
             // 서비스 계정 키 파일이 설정된 경우
-            GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(visionKeyPath));
+            final GoogleCredentials credentials;
+            try (FileInputStream serviceAccountStream = new FileInputStream(keyFile)) {
+                credentials = ServiceAccountCredentials.fromStream(serviceAccountStream)
+                        .createScoped(Collections.singletonList("https://www.googleapis.com/auth/cloud-vision"));
+            }
+
+            System.out.println("✅ [DEBUG] Credentials loaded successfully");
+
+            // 명시적으로 액세스 토큰 갱신
+            try {
+                credentials.refreshIfExpired();
+                System.out.println("✅ [DEBUG] Access token refreshed successfully");
+            } catch (Exception e) {
+                System.err.println("❌ [ERROR] Failed to refresh access token: " + e.getMessage());
+                throw e;
+            }
+
             ImageAnnotatorSettings settings = ImageAnnotatorSettings.newBuilder()
                     .setCredentialsProvider(() -> credentials)
                     .build();
+
+            System.out.println("✅ [DEBUG] Creating ImageAnnotatorClient...");
             return ImageAnnotatorClient.create(settings);
         } else {
             // 기본 Application Default Credentials 사용

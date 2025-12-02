@@ -40,3 +40,9 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Google Cloud Service Account Keys ###
+# Prevent accidental exposure of service account keys to GitHub
+src/main/resources/keys/
+*.json
+!gradle-wrapper.jar
