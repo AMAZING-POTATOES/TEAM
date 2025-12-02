@@ -18,7 +18,14 @@ export type FridgeItemDTO = {
   memo?: string;
 };
 
-export type ClassifiedMap = Record<Category, string[]>;
+export type ClassifiedItem = {
+  name: string;
+  quantity: number;
+  purchaseDate?: string;
+  expireDate?: string;
+};
+
+export type ClassifiedMap = Record<Category, ClassifiedItem[]>;
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 const KEY = "ssak:fridge";
@@ -35,7 +42,7 @@ function uid() {
 }
 
 export const Api = {
-  /** OCR 결과 (모의) 또는 실제 서버 파싱 */
+  /** OCR 결과 - 실제 서버 파싱 또는 모의 */
   async parseReceipt(
     file: File,
     onProgress?: (p: number) => void
@@ -52,19 +59,24 @@ export const Api = {
         가공식품: [],
         기타: [],
       };
-      const push = (c: Category, n: string) => r[c].push(n);
+      const push = (c: Category, n: string, q: number = 1) => r[c].push({
+        name: n,
+        quantity: q,
+        purchaseDate: new Date().toISOString().split('T')[0],
+        expireDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      });
 
-      if (/(beef|소고기|pork|chicken)/.test(lower)) push("육류", "소고기");
-      if (/(fish|연어|shrimp|오징어)/.test(lower)) push("해산물", "연어");
-      if (/(onion|양파|파)/.test(lower)) push("채소", "양파");
-      if (/(apple|사과|banana|바나나)/.test(lower)) push("과일", "사과");
+      if (/(beef|소고기|pork|chicken)/.test(lower)) push("육류", "소고기", 1);
+      if (/(fish|연어|shrimp|오징어)/.test(lower)) push("해산물", "연어", 1);
+      if (/(onion|양파|파)/.test(lower)) push("채소", "양파", 2);
+      if (/(apple|사과|banana|바나나)/.test(lower)) push("과일", "사과", 1);
       if (/(milk|우유|yogurt|egg|계란)/.test(lower))
-        push("유제품/계란", "우유와 계란");
-      if (/(tofu|두부|ham|햄|spam)/.test(lower)) push("가공식품", "두부");
+        push("유제품/계란", "우유", 1);
+      if (/(tofu|두부|ham|햄|spam)/.test(lower)) push("가공식품", "두부", 1);
 
       if (Object.values(r).every((arr) => arr.length === 0)) {
-        push("채소", "대파");
-        push("유제품/계란", "요거트");
+        push("채소", "대파", 1);
+        push("유제품/계란", "요거트", 1);
       }
 
       if (onProgress) {
@@ -83,7 +95,53 @@ export const Api = {
       return r;
     }
 
-    throw new Error("parseReceipt real API not implemented");
+    // --- REAL API: 백엔드 OCR 서버 호출 ---
+    const { apiUploadReceiptOCR } = await import("../api/apiClient");
+
+    // 백엔드 응답: Array<{ name, category, quantity, purchaseDate, expireDate, ... }>
+    type BackendItem = {
+      name: string;
+      category: string;
+      quantity: number;
+      purchaseDate?: string;
+      expireDate?: string;
+    };
+
+    const backendItems = await apiUploadReceiptOCR<BackendItem[]>(
+      file,
+      onProgress ? (progress) => onProgress(progress) : undefined
+    );
+
+    // 백엔드 응답을 ClassifiedMap으로 변환
+    const classifiedMap: ClassifiedMap = {
+      육류: [],
+      해산물: [],
+      채소: [],
+      과일: [],
+      "유제품/계란": [],
+      가공식품: [],
+      기타: [],
+    };
+
+    backendItems.forEach((item) => {
+      const category = item.category as Category;
+      const classifiedItem: ClassifiedItem = {
+        name: item.name,
+        quantity: item.quantity,
+        purchaseDate: item.purchaseDate,
+        expireDate: item.expireDate,
+      };
+
+      if (classifiedMap[category]) {
+        classifiedMap[category].push(classifiedItem);
+      } else {
+        // 알 수 없는 카테고리는 "기타"로
+        classifiedMap["기타"].push(classifiedItem);
+      }
+    });
+
+    console.log("✅ [API] ClassifiedMap created:", classifiedMap);
+    return classifiedMap;
   },
 
   async listFridge(): Promise<FridgeItemDTO[]> {

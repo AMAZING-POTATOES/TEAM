@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createRecipe, type RecipeCreateRequest } from "../../api/recipe";
+import { apiUpload } from "../../api/apiClient";
 import { useAuth } from "../../app/AuthProvider";
 
 type Ingredient = { name: string; amount?: string };
@@ -9,6 +10,7 @@ type Step = { text: string };
 export default function RecipeCreate() {
   const nav = useNavigate();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 기본 정보
   const [title, setTitle] = useState("");
@@ -16,7 +18,9 @@ export default function RecipeCreate() {
   const [mainImageUrl, setMainImageUrl] = useState("");
   const [servings, setServings] = useState("");
 
-  const [fileName, setFileName] = useState<string>("파일 선택된 파일 없음");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingName, setIngName] = useState("");
   const [ingAmount, setIngAmount] = useState("");
@@ -31,6 +35,63 @@ export default function RecipeCreate() {
   const [tags, setTags] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 파일 타입 검사
+    if (!file.type.startsWith("image/")) {
+      alert("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    // 파일 크기 검사 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("파일 크기는 5MB를 초과할 수 없습니다.");
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // 이미지 미리보기 생성
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!selectedFile) return null;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const data = await apiUpload<{ success: string; url: string; fileName: string }>(
+        "/api/upload/image",
+        formData
+      );
+
+      return "http://localhost:8080" + data.url;
+    } catch (error) {
+      console.error("이미지 업로드 오류:", error);
+      throw error;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedFile(null);
+    setImagePreview("");
+    setMainImageUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const addIngredient = () => {
     if (!ingName.trim()) return;
@@ -84,10 +145,24 @@ export default function RecipeCreate() {
     try {
       setSubmitting(true);
 
+      // 이미지가 선택되었으면 먼저 업로드
+      let uploadedImageUrl = mainImageUrl.trim();
+      if (selectedFile) {
+        try {
+          const url = await uploadImage();
+          if (url) {
+            uploadedImageUrl = url;
+          }
+        } catch (uploadError) {
+          alert(uploadError instanceof Error ? uploadError.message : "이미지 업로드에 실패했습니다.");
+          return;
+        }
+      }
+
       const recipeData: RecipeCreateRequest = {
         title: title.trim(),
         description: description.trim() || undefined,
-        mainImageUrl: mainImageUrl.trim() || undefined,
+        mainImageUrl: uploadedImageUrl || undefined,
         difficulty: difficultyMap[level],
         cookingTime: parseInt(time, 10),
         servings: servings ? parseInt(servings, 10) : undefined,
@@ -148,14 +223,49 @@ export default function RecipeCreate() {
       </section>
 
       <section className="mt-6 rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">
-        <label className="block text-sm font-semibold mb-2">대표 이미지 URL</label>
-        <input
-          value={mainImageUrl}
-          onChange={(e) => setMainImageUrl(e.target.value)}
-          placeholder="이미지 URL을 입력해주세요 (선택사항)"
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
-        />
-        <p className="mt-2 text-xs text-gray-500">외부 이미지 URL을 입력하거나 비워두세요</p>
+        <label className="block text-sm font-semibold mb-2">대표 이미지</label>
+
+        {/* 이미지 미리보기 */}
+        {imagePreview && (
+          <div className="mb-4 relative">
+            <img
+              src={imagePreview}
+              alt="미리보기"
+              className="w-full max-h-64 object-cover rounded-xl"
+            />
+            <button
+              type="button"
+              onClick={removeImage}
+              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* 파일 업로드 버튼 */}
+        <div className="flex gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {selectedFile ? selectedFile.name : "이미지 파일 선택"}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          JPG, PNG, GIF 등 이미지 파일 (최대 5MB)
+        </p>
       </section>
 
       <section className="mt-8 rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm p-6">

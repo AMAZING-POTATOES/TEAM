@@ -20,15 +20,7 @@ function getStatus(item: FridgeItemDTO): FreshStatus {
   return "신선";
 }
 
-const CAT_OPTIONS: Category[] = [
-  "육류",
-  "해산물",
-  "채소",
-  "과일",
-  "유제품/계란",
-  "가공식품",
-  "기타",
-];
+const CAT_OPTIONS: Category[] = ["육류", "해산물", "채소", "과일", "유제품/계란", "가공식품", "기타"];
 
 const STATUS_OPTIONS: ("ALL" | FreshStatus)[] = ["ALL", "신선", "임박", "만료"];
 
@@ -91,22 +83,16 @@ export default function Fridge() {
               alt="냉장고 아이콘"
               className="w-12"
             />
-
-            {/* 제목 + 설명을 세로로 배치 */}
             <div className="flex flex-col">
-              <h1 className="text-[26px] md:text-[28px] font-extrabold tracking-[-0.02em]">
-                나의 냉장고
-              </h1>
-              <p className="text-[14px] text-slate-500 mt-0.5">
-                냉장고 속 재료를 확인하고 관리하세요.
-              </p>
+              <h1 className="text-[26px] md:text-[28px] font-extrabold tracking-[-0.02em]">나의 냉장고</h1>
+              <p className="text-[14px] text-slate-500 mt-0.5">냉장고 속 재료를 확인하고 관리하세요.</p>
             </div>
           </div>
         </section>
 
-        {/* 🔹 필터 카드 – 제목 영역과 구분되는 박스 */}
+        {/* 필터 카드 */}
         <section className="mt-6 border-t border-b border-slate-200 pt-3 pb-4">
-          {/* 🏷 카테고리 필터 pill 버튼 */}
+          {/* 카테고리 필터 pill 버튼 */}
           <div className="mt-1">
             <div className="text-xs font-medium text-slate-500 mb-1">
               카테고리
@@ -134,7 +120,7 @@ export default function Fridge() {
             </div>
           </div>
 
-          {/* 🍃 신선도(상태) 필터 pill 버튼 */}
+          {/* 신선도 필터 pill 버튼 */}
           <div className="mt-4">
             <div className="text-xs font-medium text-slate-500 mb-1">
               신선도
@@ -163,9 +149,9 @@ export default function Fridge() {
           </div>
         </section>
 
-        {/* 📦 재료 리스트 카드 */}
+        {/* 재료 리스트 카드 */}
         <div className="bg-white rounded-[20px] border border-gray-200 p-6 shadow-sm mt-6">
-          {/* 🔍 검색 + 추가 버튼 */}
+          {/* 검색 + 추가 버튼 */}
           <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
             <div className="flex-1 min-w-[220px]">
               <input
@@ -184,7 +170,6 @@ export default function Fridge() {
             </button>
           </div>
 
-          {/* 📋 테이블 */}
           <div className="overflow-auto mt-4">
             <table className="min-w-[880px] w-full text-sm">
               <thead>

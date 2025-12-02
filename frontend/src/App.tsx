@@ -8,7 +8,7 @@ import RecipeHome from "./pages/recipes/RecipeHome";
 import RecipeDetail from "./pages/recipes/RecipeDetail";
 import RecipeCommunity from "./pages/recipes/RecipeCommunity";
 import RecipeCreate from "./pages/recipes/RecipeCreate";
-import MyPage from "./pages/MyPage";
+import AiRecipeCreate from "./pages/recipes/AiRecipeCreate";
 
 export default function App() {
   return (
@@ -22,10 +22,11 @@ export default function App() {
           <Route path="/fridge" element={<FridgeHome />} />
           <Route path="/fridge/edit/:id" element={<FridgeEdit />} />
           <Route path="/recipes" element={<RecipeHome />} />
-          <Route path="/mypage" element={<MyPage />} />
           {/* 정적 라우트를 동적 라우트보다 먼저 선언 */}
           <Route path="/recipes/community" element={<RecipeCommunity />} />
           <Route path="/recipes/create" element={<RecipeCreate />} />
+          <Route path="/recipes/ai" element={<AiRecipeCreate />} />
+          {/* AI 레시피도 RecipeDetail에서 처리 */}
           <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="*" element={<div className="p-10">Not Found</div>} />
         </Routes>

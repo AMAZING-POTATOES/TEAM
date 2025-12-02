@@ -59,12 +59,9 @@ export default function Navbar() {
             </button>
           ) : (
             <>
-              <button
-                onClick={() => nav("/mypage")}
-                className="hidden sm:block text-sm text-slate-600 hover:underline"
-              >
+              <span className="hidden sm:block text-sm text-slate-600">
                 {user.name}
-              </button>
+              </span>
 
               <button
                 onClick={logout}

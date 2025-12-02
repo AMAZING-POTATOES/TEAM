@@ -31,6 +31,15 @@ export default function FridgeEdit() {
     if (!id || id === "new") return;
     if (!editing) return;
     const { id: _id, ...rest } = editing;
+
+    // 디버깅: 수정 페이지 진입 시 로드된 데이터 확인
+    console.log("📝 FridgeEdit - 수정할 아이템 데이터:", {
+      id: editing.id,
+      category: editing.category,
+      memo: editing.memo,
+      fullData: editing,
+    });
+
     setForm(rest);
   }, [id, editing]);
 
