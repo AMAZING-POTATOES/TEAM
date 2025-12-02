@@ -25,10 +25,9 @@ export default function RecipeHome() {
   const [mode, setMode] = useState<Mode>("ingredient");
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [category, setCategory] = useState<Category>("모두");
+  const [recipeCategory, setRecipeCategory] = useState<Category>("모두");
   const [level, setLevel] = useState<Level>("모두");
   const [query, setQuery] = useState("");
-  const [cookableOnly, setCookableOnly] = useState(false);
 
   // API 연동으로 변경
   const [list, setList] = useState<RecipeSummary[]>([]);
@@ -52,9 +51,9 @@ export default function RecipeHome() {
           // 키워드 검색
           const pageResponse = await searchRecipesByKeyword(query, 0, 100);
           response = pageResponse.content;
-        } else if (category !== "모두") {
+        } else if (recipeCategory !== "모두") {
           // 카테고리 필터
-          const pageResponse = await getRecipesByCategory(category, 0, 100);
+          const pageResponse = await getRecipesByCategory(recipeCategory, 0, 100);
           response = pageResponse.content;
         } else {
           // 기본 추천
@@ -66,13 +65,6 @@ export default function RecipeHome() {
           response = response.filter(r =>
             r.difficulty && mapDifficultyToKorean(r.difficulty) === level
           );
-        }
-
-        // cookableOnly 필터링 (임시: 클라이언트 사이드)
-        // TODO: 백엔드에서 지원 시 제거
-        if (cookableOnly && selected.length > 0) {
-          // 현재는 이미 getRecommendationsByIngredients로 필터링됨
-          // 추가 필터링 로직 필요 시 구현
         }
 
         if (mounted) {
@@ -94,7 +86,7 @@ export default function RecipeHome() {
     return () => {
       mounted = false;
     };
-  }, [query, level, category, cookableOnly, selected]);
+  }, [query, level, recipeCategory, selected]);
 
   const [prompt, setPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -153,8 +145,8 @@ export default function RecipeHome() {
         <IngredientSelector
           value={selected}
           onChange={setSelected}
-          category={category}
-          onCategoryChange={setCategory}
+          category={recipeCategory}
+          onCategoryChange={setRecipeCategory}
           level={level}
           onLevelChange={setLevel}
         />
@@ -187,8 +179,6 @@ export default function RecipeHome() {
             <RecipeFilters
               query={query}
               setQuery={setQuery}
-              cookableOnly={cookableOnly}
-              setCookableOnly={setCookableOnly}
             />
           </div>
 

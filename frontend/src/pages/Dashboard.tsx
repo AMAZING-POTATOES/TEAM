@@ -251,11 +251,11 @@ export default function Dashboard() {
             onFinishLoggedOut={handleIntroFinishLoggedOut}
           />
         )}
-        <div className="h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 grid place-items-center px-4">
-          <div className="text-center max-w-lg">
+        <div className="h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 flex items-center justify-center px-4">
+          <div className="w-full max-w-lg">
             {isAuthError ? (
               // 인증 오류 - 로그인 페이지 UI
-              <div className="bg-white rounded-[24px] shadow-lg border border-gray-100 p-8 md:p-10">
+              <div className="bg-white rounded-[24px] shadow-lg border border-gray-100 p-8 md:p-10 text-center">
                 <div className="mb-6">
                   <div className="w-21 h-21 mx-auto mb-4 flex items-center justify-center">
                     <img src={potatoIcon} alt="감자" className="w-full h-full object-contain" />
@@ -278,7 +278,6 @@ export default function Dashboard() {
                         theme="outline"
                         size="large"
                         text="signin_with"
-                        width="100%"
                       />
                     </div>
                     {isLoggingIn && (

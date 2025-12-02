@@ -14,7 +14,7 @@ export default function App() {
   return (
     <>
       <Navbar />
-      <div className="pt-16 bg-gray-50 min-h-screen">
+      <div className=" bg-gray-50 min-h-screen">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
