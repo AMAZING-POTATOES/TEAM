@@ -1,11 +1,11 @@
 type Props = {
-  query: string; setQuery: (v: string) => void;
-  cookableOnly: boolean; setCookableOnly: (v:boolean)=>void;
+  query: string;
+  setQuery: (v: string) => void;
 };
 
 export default function RecipeFilters({
-  query, setQuery,
-  cookableOnly, setCookableOnly
+  query,
+  setQuery
 }: Props){
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -15,14 +15,6 @@ export default function RecipeFilters({
         value={query}
         onChange={e=>setQuery(e.target.value)}
       />
-      <label className="inline-flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={cookableOnly}
-          onChange={e=>setCookableOnly(e.target.checked)}
-        />
-        만들 수 있는 것만
-      </label>
     </div>
   );
 }
