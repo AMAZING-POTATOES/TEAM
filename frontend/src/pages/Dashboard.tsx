@@ -251,11 +251,11 @@ export default function Dashboard() {
             onFinishLoggedOut={handleIntroFinishLoggedOut}
           />
         )}
-        <div className="h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 grid place-items-center px-4">
+        <div className="h-screen overflow-hidden bg-gradient-to-br grid place-items-center px-4">
           <div className="text-center max-w-lg">
             {isAuthError ? (
               // 인증 오류 - 로그인 페이지 UI
-              <div className="bg-white rounded-[24px] shadow-lg border border-gray-100 p-8 md:p-10">
+              <div className="bg-white rounded-[24px] shadow-lg border border-gray-100 p-8 md:p-10 gradient-to-b from-white to-green-50">
                 <div className="mb-6">
                   <div className="w-21 h-21 mx-auto mb-4 flex items-center justify-center">
                     <img src={potatoIcon} alt="감자" className="w-full h-full object-contain" />

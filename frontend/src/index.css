@@ -27,6 +27,11 @@ html.dark {
   --border-soft: #2f3b34;
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background: var(--bg-app);
   color: var(--text-main);
