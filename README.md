@@ -123,55 +123,6 @@
 
 ## 🏗️ 시스템 아키텍처 (System Architecture)
 
-### 전체 시스템 구조
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Client Layer                             │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │        React + Vite (TypeScript)                          │  │
-│  │  - 사용자 인터페이스                                        │  │
-│  │  - 반응형 웹 디자인                                         │  │
-│  │  - Local Storage (임시 데이터)                             │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ↓ HTTPS / REST API
-┌─────────────────────────────────────────────────────────────────┐
-│                    Application Layer                             │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │     Spring Boot 3.3.4 (Java 17)                           │  │
-│  │  ┌────────────────────────────────────────────────────┐  │  │
-│  │  │  Controller Layer (REST API Endpoints)             │  │  │
-│  │  └────────────────────────────────────────────────────┘  │  │
-│  │  ┌────────────────────────────────────────────────────┐  │  │
-│  │  │  Service Layer (Business Logic)                    │  │  │
-│  │  │  - OCR 파싱 로직                                    │  │  │
-│  │  │  - 레시피 추천 알고리즘                              │  │  │
-│  │  │  - 재고 관리 로직                                    │  │  │
-│  │  └────────────────────────────────────────────────────┘  │  │
-│  │  ┌────────────────────────────────────────────────────┐  │  │
-│  │  │  Security Layer (Spring Security 7.0.0)            │  │  │
-│  │  │  - JWT 기반 인증/인가                               │  │  │
-│  │  │  - OAuth 2.0 (Google Login)                        │  │  │
-│  │  └────────────────────────────────────────────────────┘  │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                ┌─────────────┼─────────────┐
-                ↓             ↓             ↓
-┌──────────────────┐ ┌─────────────┐ ┌──────────────────┐
-│   Data Layer     │ │ External    │ │  External APIs   │
-│                  │ │   APIs      │ │                  │
-│  MySQL 8.0       │ │             │ │  Google Vision   │
-│  - 사용자 정보    │ │  Jsoup      │ │  API (OCR)       │
-│  - 식재료 재고    │ │  크롤러      │ │                  │
-│  - 레시피 데이터  │ │             │ │  Google Gemini   │
-│  - 게시판/댓글    │ │  만개의      │ │  API (AI)        │
-│                  │ │  레시피      │ │                  │
-└──────────────────┘ └─────────────┘ └──────────────────┘
-```
-
 ### 주요 데이터 흐름
 
 #### 1. OCR 기반 식재료 등록 플로우
@@ -220,14 +171,6 @@ Jsoup 크롤러 (만개의레시피 검색)
     ↓
 Frontend 화면 표시
 ```
-
-### 핵심 설계 원칙
-
-- **레이어드 아키텍처**: Presentation, Application, Data 계층 분리
-- **RESTful API**: 프론트엔드와 백엔드 간 표준 REST API 통신
-- **모듈화**: 각 기능을 독립적인 서비스 모듈로 구성
-- **외부 의존성 관리**: API 호출 실패 시 Fallback 처리
-- **보안**: JWT 토큰 기반 인증, HTTPS 통신
 
 ---
 
@@ -283,7 +226,7 @@ cd [project-directory]
 ```bash
 # MySQL 데이터베이스 생성
 mysql -u root -p
-CREATE DATABASE refrigerator_db;
+CREATE DATABASE amazing_potatoes;
 
 # IntelliJ IDEA에서 프로젝트 열기
 # application.properties 설정 확인
@@ -292,10 +235,6 @@ CREATE DATABASE refrigerator_db;
 # - spring.datasource.password
 
 # MainApplication 클래스 실행
-# 또는 터미널에서:
-./gradlew bootRun  # Gradle 사용 시
-# 또는
-mvn spring-boot:run  # Maven 사용 시
 ```
 
 #### 3️⃣ Frontend 실행
@@ -317,7 +256,7 @@ npm run dev
 Backend (`application.properties` 또는 `application.yml`):
 ```properties
 # Database
-spring.datasource.url=jdbc:mysql://localhost:3306/refrigerator_db
+spring.datasource.url=jdbc:mysql://localhost:3306/amazing_potatoes
 spring.datasource.username=your_username
 spring.datasource.password=your_password
 
@@ -342,46 +281,6 @@ VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 
 - **Backend**: `http://localhost:8080`에서 API 정상 작동 확인
 - **Frontend**: `http://localhost:5173`에서 웹 애플리케이션 접속
-- **Health Check**: `http://localhost:8080/actuator/health` (Spring Boot Actuator 사용 시)
-
-### 🐛 트러블슈팅
-
-<details>
-<summary><b>MySQL 연결 오류</b></summary>
-
-```bash
-# MySQL 서비스 실행 확인
-sudo systemctl status mysql  # Linux
-brew services list  # macOS
-
-# MySQL 접속 확인
-mysql -u root -p
-```
-</details>
-
-<details>
-<summary><b>포트 충돌 오류</b></summary>
-
-```bash
-# 8080 포트 사용 중인 프로세스 확인 및 종료
-lsof -i :8080  # macOS/Linux
-netstat -ano | findstr :8080  # Windows
-
-# 또는 application.properties에서 포트 변경
-server.port=8081
-```
-</details>
-
-<details>
-<summary><b>npm install 오류</b></summary>
-
-```bash
-# node_modules 삭제 후 재설치
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-```
-</details>
 
 ---
 
@@ -408,7 +307,7 @@ java -version
 server.port=8080
 
 # Database Configuration
-spring.datasource.url=jdbc:mysql://localhost:3306/refrigerator_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+spring.datasource.url=jdbc:mysql://localhost:3306/amazing_potatoes?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
 spring.datasource.username=root
 spring.datasource.password=your_password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
@@ -438,8 +337,8 @@ spring.security.oauth2.client.registration.google.scope=profile,email
 spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/google
 
 # File Upload
-spring.servlet.multipart.max-file-size=10MB
-spring.servlet.multipart.max-request-size=10MB
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=5MB
 ```
 
 #### 1-2. Frontend 환경 설정
@@ -467,27 +366,6 @@ VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 # App Configuration
 VITE_APP_NAME=냉장고를 부탁해
 VITE_APP_VERSION=1.0.0
-```
-
-#### 1-3. Database 초기 설정
-
-```sql
--- MySQL 접속
-mysql -u root -p
-
--- 데이터베이스 생성
-CREATE DATABASE refrigerator_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- 사용자 생성 (선택사항)
-CREATE USER 'refrigerator_user'@'localhost' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON refrigerator_db.* TO 'refrigerator_user'@'localhost';
-FLUSH PRIVILEGES;
-
--- 데이터베이스 선택
-USE refrigerator_db;
-
--- 테이블 자동 생성 확인 (Spring Boot 실행 후)
-SHOW TABLES;
 ```
 
 ### 2. API 키 발급 가이드
@@ -545,78 +423,6 @@ npm run dev
 4. **레시피 추천**: 보유 식재료 기반 레시피 검색
 5. **AI 레시피**: Gemini API를 통한 레시피 생성
 6. **게시판**: 레시피 게시글 작성 및 댓글 테스트
-
-### 4. 빌드 및 배포 (Production)
-
-#### Backend 빌드
-```bash
-cd backend
-./gradlew clean build
-
-# JAR 파일 생성 확인
-ls build/libs/
-
-# JAR 파일 실행
-java -jar build/libs/refrigerator-app-0.0.1-SNAPSHOT.jar
-```
-
-#### Frontend 빌드
-```bash
-cd frontend
-npm run build
-
-# dist 폴더 생성 확인
-ls dist/
-
-# 정적 파일 서빙 (예: nginx, Apache)
-```
-
-### 5. 테스트 데이터 (Optional)
-
-#### 샘플 영수증 이미지
-프로젝트에서 제공하는 샘플 영수증으로 OCR 기능을 테스트할 수 있습니다.
-```
-/test-data/receipts/
-  - sample_receipt_01.jpg (전자영수증)
-  - sample_receipt_02.jpg (실물영수증)
-```
-
-#### 테스트 계정
-```
-Google OAuth를 통한 로그인만 지원
-별도의 테스트 계정은 필요하지 않습니다
-```
-
-### 6. 로그 및 디버깅
-
-#### Backend 로그 확인
-```bash
-# application.properties에서 로그 레벨 설정
-logging.level.root=INFO
-logging.level.com.yourpackage=DEBUG
-logging.file.name=logs/application.log
-
-# 로그 파일 확인
-tail -f logs/application.log
-```
-
-#### Frontend 디버깅
-```bash
-# 브라우저 개발자 도구 (F12)
-# Console 탭에서 에러 확인
-# Network 탭에서 API 호출 확인
-```
-
-### 7. 자주 발생하는 문제 해결
-
-| 문제 | 원인 | 해결 방법 |
-|------|------|-----------|
-| API 키 오류 | 잘못된 API 키 또는 미설정 | `application.properties` 및 `.env` 파일 확인 |
-| CORS 오류 | Backend CORS 설정 미흡 | `WebConfig.java`에서 CORS 설정 확인 |
-| 데이터베이스 연결 실패 | MySQL 미실행 또는 잘못된 설정 | MySQL 서비스 상태 및 연결 정보 확인 |
-| OAuth 리디렉션 오류 | 승인된 리디렉션 URI 미등록 | Google Cloud Console에서 URI 추가 |
-| OCR 인식 실패 | Google Vision API 할당량 초과 | API 사용량 확인 및 청구 설정 |
-| Port 이미 사용 중 | 다른 애플리케이션이 포트 점유 | 포트 변경 또는 프로세스 종료 |
 
 ---
 
@@ -678,16 +484,6 @@ refrigerator-management/
 │
 └── README.md                            # 메인 README
 ```
-
----
-
-## 🔗 관련 링크 (Links)
-
-- **GitHub Repository**: [링크 추가 예정]
-- **프로젝트 결과 보고서**: [보고서 링크]
-- **시연 영상**: [YouTube 링크 추가 예정]
-- **API 문서**: [Swagger/Postman 문서 링크]
-- **팀 활동 일지**: [GitHub Wiki 또는 Notion 링크]
 
 ---
 
@@ -758,15 +554,6 @@ refrigerator-management/
 ## 📄 라이선스 (License)
 
 이 프로젝트는 교육 목적으로 제작되었습니다.
-
----
-
-## 📧 문의 (Contact)
-
-프로젝트에 대한 문의사항이 있으시면 아래로 연락 주시기 바랍니다.
-
-- **팀 이메일**: [팀 이메일 주소]
-- **GitHub Issues**: [GitHub Issues 링크]
 
 ---
 
