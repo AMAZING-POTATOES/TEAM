@@ -8,6 +8,7 @@
 ![React](https://img.shields.io/badge/React-19.1.1-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-latest-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
+[![Notion](https://img.shields.io/badge/Notion-Team%20Scrum-000000?style=flat-square&logo=notion&logoColor=white)](https://www.notion.so/2b9f823f8f7080cdb65ae05c820c1232?source=copy_link)
 
 </div>
 
@@ -117,7 +118,7 @@
 | IntelliJ IDEA | 백엔드 IDE |
 | Visual Studio Code | 프론트엔드 IDE |
 | GitHub | 협업 및 버전 관리 |
-| Trello | 스크럼 방식 프로젝트 관리 |
+| Notion | 스크럼 방식 프로젝트 관리 |
 
 ---
 
@@ -199,6 +200,7 @@ Frontend 화면 표시
 | **스프린트 리뷰** | 기능 개발 완료 시 | 카카오톡에 결과물 공유 후 팀원 피드백 (비동기 리뷰) |
 | **백로그 관리** | 매 스프린트 | 필수 기능 우선순위화, 기능 단위 병렬 개발 |
 
+> 🔗 **Team Amazing Potatoes의 상세한 협업 기록은 [Notion 스크럼 페이지](https://www.notion.so/2b9f823f8f7080cdb65ae05c820c1232?source=copy_link)에서 확인하실 수 있습니다.**
 ---
 
 ## 🚀 Quick Start
@@ -428,8 +430,12 @@ npm run dev
 
 ## 📹 시연 영상 (Demo Video)
 
-> 🎥 **YouTube 시연 영상**: [링크 준비 중]
-> 
+> 🎥 **YouTube 시연 영상**: [https://www.youtube.com/watch?v=AH4a1VvdAB8]
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=AH4a1VvdAB8">
+    <img src="https://img.youtube.com/vi/AH4a1VvdAB8/maxresdefault.jpg" alt="시연 영상 썸네일" width="80%" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+  </a>
+</div>
 > 프로젝트의 주요 기능과 사용 방법을 영상으로 확인할 수 있습니다.
 
 ---
