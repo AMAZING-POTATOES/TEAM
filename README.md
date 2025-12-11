@@ -43,6 +43,12 @@
 
 ## ✨ 주요 기능
 
+<div align="center">
+  <img src="./프로젝트 UI.png" alt="Project UI Screenshot" width="100%">
+</div>
+
+<br>
+
 ### 1. 구글 소셜 로그인
 - 일반적인 회원가입 절차 없이 구글 계정을 통한 간편한 소셜 로그인 기능을 제공합니다.
 - 사용자 인증 과정을 단순화하여 서비스 접근성을 높였습니다.
@@ -124,6 +130,11 @@
 
 ## 🏗️ 시스템 아키텍처 (System Architecture)
 
+<div align="center">
+  <img src="./시스템 아키텍처.png" alt="System Architecture" width="100%">
+</div>
+
+<br>
 ### 주요 데이터 흐름
 
 #### 1. OCR 기반 식재료 등록 플로우
