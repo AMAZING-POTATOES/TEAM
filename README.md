@@ -110,7 +110,7 @@
 |--------|------|------|
 | Google Cloud Vision API | 3.47.0 | 영수증 텍스트 인식 (OCR) |
 | Google Gemini API | 2.0 Flash | 생성형 AI 기반 레시피 생성 |
-| 만개의레시피 API | - | 레시피 데이터 크롤링 |
+| 만개의레시피 크롤링링I | - | 레시피 데이터 크롤링 |
 
 ### Development Tools
 | 도구 | 용도 |
